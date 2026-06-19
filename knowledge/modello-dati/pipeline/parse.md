@@ -1,8 +1,9 @@
 ---
-type: stage
+type: Processo
 title: Parse
 description: Parsing Akoma Ntoso e metadati FRBR/ELI.
 tags: [pipeline, akn, frbr]
+timestamp: 2026-06-19T00:00:00Z
 ---
 
 # Parse

@@ -1,8 +1,9 @@
 ---
-type: stage
+type: Processo
 title: Chunk
 description: Porzioni indicizzabili con metadati di citazione.
 tags: [pipeline, chunk]
+timestamp: 2026-06-19T00:00:00Z
 ---
 
 # Chunk

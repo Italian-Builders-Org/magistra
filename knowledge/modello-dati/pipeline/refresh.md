@@ -1,8 +1,9 @@
 ---
-type: stage
+type: Processo
 title: Refresh
 description: Re-ingest incrementale e multivigenza.
 tags: [pipeline, ops, multivigenza]
+timestamp: 2026-06-19T00:00:00Z
 ---
 
 # Refresh

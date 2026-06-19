@@ -1,8 +1,9 @@
 ---
-type: index
+type: Indice
 title: Pipeline di trasformazione
 description: Data plane da Normattiva all'indice interrogabile.
 tags: [pipeline]
+timestamp: 2026-06-19T00:00:00Z
 ---
 
 # Pipeline di trasformazione

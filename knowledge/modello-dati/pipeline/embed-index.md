@@ -1,8 +1,9 @@
 ---
-type: stage
+type: Processo
 title: Embed + Index
 description: Vettori e scrittura su pgvector.
 tags: [pipeline, embedding, pgvector]
+timestamp: 2026-06-19T00:00:00Z
 ---
 
 # Embed + Index

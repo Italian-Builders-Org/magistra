@@ -1,9 +1,9 @@
 ---
-type: contract
+type: Componente
 title: Contratto retrieval ↔ API
 description: Confine data plane / API layer.
 tags: [pipeline, api, contract]
-timestamp: 2026-06-19
+timestamp: 2026-06-19T00:00:00Z
 ---
 
 # Contratto retrieval ↔ API

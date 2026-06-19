@@ -1,9 +1,9 @@
 ---
-type: guide
+type: Processo
 title: Come leggere la documentazione pipeline
 description: Chiave di lettura per team, implementers, reviewer e agenti.
 tags: [pipeline, guida]
-timestamp: 2026-06-19
+timestamp: 2026-06-19T00:00:00Z
 ---
 
 # Come leggere la documentazione pipeline

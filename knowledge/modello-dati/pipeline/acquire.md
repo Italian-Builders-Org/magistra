@@ -1,8 +1,9 @@
 ---
-type: stage
+type: Processo
 title: Acquire
 description: Acquisizione artefatti grezzi da Normattiva con provenance.
 tags: [pipeline, normattiva]
+timestamp: 2026-06-19T00:00:00Z
 ---
 
 # Acquire

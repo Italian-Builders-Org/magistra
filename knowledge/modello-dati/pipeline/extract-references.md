@@ -1,8 +1,9 @@
 ---
-type: stage
+type: Processo
 title: Extract references
 description: Grafo Riferimenti tra norme.
 tags: [pipeline, cross-reference]
+timestamp: 2026-06-19T00:00:00Z
 ---
 
 # Extract references

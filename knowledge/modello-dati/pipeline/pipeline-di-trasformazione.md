@@ -1,9 +1,9 @@
 ---
-type: concept
+type: Processo
 title: Pipeline di trasformazione, panoramica
 description: Principi, entità, gate e ordine di lavoro del data plane.
 tags: [pipeline, spec]
-timestamp: 2026-06-19
+timestamp: 2026-06-19T00:00:00Z
 ---
 
 # Pipeline di trasformazione, panoramica

@@ -1,8 +1,9 @@
 ---
-type: stage
+type: Processo
 title: Normalize
 description: Entità Norma, Versione, Unità dal ParsedDocument.
 tags: [pipeline, norma, versione, unita]
+timestamp: 2026-06-19T00:00:00Z
 ---
 
 # Normalize
