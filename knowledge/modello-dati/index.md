@@ -17,7 +17,8 @@ Questa cartella descrive come Magistra rappresenta una norma italiana a partire 
 - [Il modello FRBR](/modello-dati/frbr.md) — Work / Expression / Manifestation / Item.
 - [Identificazione: URI ELI](/modello-dati/uri-eli.md) — chiave primaria stabile.
 - [Struttura del documento AKN](/modello-dati/struttura-akn.md) — articolo e comma.
-- [Pipeline di trasformazione](/modello-dati/pipeline-trasformazione.md) — da Normattiva all'indice vettoriale.
+- [Pipeline di trasformazione](/modello-dati/pipeline-trasformazione.md): panoramica e diagramma.
+- [Pipeline v0.1 (bozza operativa)](/modello-dati/pipeline/leggere.md): specifica per fasi, gate e contratto API.
 
 ## Entità del corpus normativo
 

@@ -4,7 +4,7 @@
 
 L'obiettivo è offrire un assistente legale AI con chat, ricerca normativa e analisi documentale, interamente fondato su fonti del diritto italiano e con citazioni verificabili.
 
-Questo prodotto è ideato, gestito e costruito dalla community **[Italian Builders](https://italianbuilders.co)** — trovaci su [X (@italianbldrs)](https://x.com/italianbldrs) e su [italianbuilders.co](https://italianbuilders.co).
+Questo prodotto è ideato, gestito e costruito dalla community **[Italian Builders](https://italianbuilders.co)**. Trovaci su [X (@italianbldrs)](https://x.com/italianbldrs) e su [italianbuilders.co](https://italianbuilders.co).
 
 ⚠️ **Disclaimer**: Magistra è uno strumento di supporto informativo. Non fornisce consulenza legale e non sostituisce il parere di un avvocato o di un professionista abilitato.
 
@@ -36,10 +36,10 @@ I principi guida sono tre:
 
 Il progetto si fonda su fonti ufficiali e aperte:
 
-- **[Normattiva Open Data](https://dati.normattiva.it/)** — leggi, decreti e atti in formato **Akoma Ntoso (LegalDOCML)**, **JSON** e **HTML**, con identificatori **ELI (European Legislation Identifier)** e API ufficiali.
-- **Gazzetta Ufficiale** — pubblicazione degli atti.
-- **EUR-Lex** — normativa dell'Unione Europea collegata.
-- **Giurisprudenza** — sentenze di Corte Costituzionale e Corte di Cassazione (ove disponibili in formato aperto).
+- **[Normattiva Open Data](https://dati.normattiva.it/)**: leggi, decreti e atti in formato **Akoma Ntoso (LegalDOCML)**, **JSON** e **HTML**, con identificatori **ELI (European Legislation Identifier)** e API ufficiali.
+- **Gazzetta Ufficiale**: pubblicazione degli atti.
+- **EUR-Lex**: normativa dell'Unione Europea collegata.
+- **Giurisprudenza**: sentenze di Corte Costituzionale e Corte di Cassazione (ove disponibili in formato aperto).
 
 ---
 
@@ -79,10 +79,10 @@ Il progetto è agli inizi e i contributi sono benvenuti: pipeline dati, parsing 
 
 La knowledge base del progetto è in [`knowledge/`](knowledge/), strutturata come bundle **[Open Knowledge Format (OKF) v0.1](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing)**: una directory di file Markdown con frontmatter YAML, dove ogni concetto (fonte, entità, componente, termine) è un documento autonomo e collegabile, leggibile sia da persone sia da agenti AI.
 
-- [Fonti dei dati](knowledge/fonti/index.md) — fonti normative, formati e condizioni di riuso.
-- [Modello dati e parsing Akoma Ntoso](knowledge/modello-dati/index.md) — FRBR, ELI, schema interno e pipeline.
-- [Architettura](knowledge/architettura/index.md) — componenti e flusso RAG.
-- [Glossario](knowledge/glossario/index.md) — termini giuridici e tecnici.
+- [Fonti dei dati](knowledge/fonti/index.md): fonti normative, formati e condizioni di riuso.
+- [Modello dati e parsing Akoma Ntoso](knowledge/modello-dati/index.md): FRBR, ELI, schema interno e pipeline.
+- [Architettura](knowledge/architettura/index.md): componenti e flusso RAG.
+- [Glossario](knowledge/glossario/index.md): termini giuridici e tecnici.
 
 ### Aprire la knowledge base in Obsidian
 
