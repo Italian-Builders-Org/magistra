@@ -1,13 +1,13 @@
 ---
 type: Fonte Dati
-title: Normattiva — Open Data
+title: Normattiva: Open Data
 description: Fonte primaria per la legislazione statale italiana (leggi, decreti, codici), in formato Akoma Ntoso / ELI.
 resource: https://dati.normattiva.it/
 tags: [fonte-primaria, normattiva, akoma-ntoso, eli]
 timestamp: 2026-06-18T00:00:00Z
 ---
 
-# Normattiva — Open Data (fonte primaria)
+# Normattiva: Open Data (fonte primaria)
 
 Portale: <https://dati.normattiva.it/>
 

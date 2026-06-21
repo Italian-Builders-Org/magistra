@@ -15,7 +15,7 @@ Modalità di analisi in blocco: a partire da un insieme di [documenti](/modello-
 | Documento | Scadenza | Foro competente | Clausola di recesso |
 |---|---|---|---|
 | Contratto A | 31/12/2026 | Milano | Sì, art. 7 |
-| Contratto B | — | Roma | No |
+| Contratto B |: | Roma | No |
 
 ## Cosa fa
 

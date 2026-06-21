@@ -20,7 +20,7 @@ I documenti caricati dall'utente (contratti, atti, pareri) contengono spesso dat
 ## Implicazioni tecniche
 
 - I file risiedono nell'[object storage](/architettura/object-storage.md) dell'istanza.
-- Le credenziali e le [API key](/architettura/gestione-api-key.md) sono [cifrate](/glossario/cifratura.md) — vedi [Sicurezza](/requisiti/sicurezza.md).
+- Le credenziali e le [API key](/architettura/gestione-api-key.md) sono [cifrate](/glossario/cifratura.md): vedi [Sicurezza](/requisiti/sicurezza.md).
 - Attenzione all'invio di dati ai [provider LLM](/architettura/provider-llm.md) esterni: va reso trasparente e, ove richiesto, evitabile con modelli locali.
 
 > Nessun dato personale o documento riservato va inserito nel repository del progetto.

@@ -1,6 +1,6 @@
 ---
 type: Concetto
-title: Identificazione — URI ELI
+title: Identificazione: URI ELI
 description: L'URI ELI come chiave primaria stabile per collegare versioni, citazioni e riferimenti incrociati.
 resource: https://eur-lex.europa.eu/eli-register/about.html
 tags: [eli, identificazione, chiave-primaria]

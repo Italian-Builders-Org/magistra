@@ -23,7 +23,7 @@ Un singolo turno di una [Conversazione](/modello-dati/conversazione.md): la doma
 
 ## Note
 
-- I campi `query_generate` e `chunk_usati` rendono **tracciabile** come è stata costruita la risposta — dalle query pianificate alle fonti recuperate — a supporto della [valutazione della qualità](/requisiti/valutazione-qualita.md).
+- I campi `query_generate` e `chunk_usati` rendono **tracciabile** come è stata costruita la risposta, dalle query pianificate alle fonti recuperate, a supporto della [valutazione della qualità](/requisiti/valutazione-qualita.md).
 - Le citazioni nascono dal [flusso RAG](/architettura/flusso-rag.md).
 
 Parte del [modello dati applicativo](/modello-dati/modello-applicativo.md).

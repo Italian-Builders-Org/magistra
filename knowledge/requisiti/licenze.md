@@ -12,7 +12,7 @@ Due piani distinti: la licenza del **software** e le condizioni di riuso dei **d
 
 ## Software
 
-- Proposta: **AGPL-3.0**, per garantire che le derivazioni — incluse quelle erogate come servizio — restino aperte.
+- Proposta: **AGPL-3.0**, per garantire che le derivazioni, incluse quelle erogate come servizio: restino aperte.
 - È la licenza già dichiarata nel `package.json` del repository.
 
 ## Dati delle fonti

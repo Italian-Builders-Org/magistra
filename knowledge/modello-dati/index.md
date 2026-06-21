@@ -14,9 +14,9 @@ Questa cartella descrive come Magistra rappresenta una norma italiana a partire 
 
 ## Concetti di base
 
-- [Il modello FRBR](/modello-dati/frbr.md) — Work / Expression / Manifestation / Item.
-- [Identificazione: URI ELI](/modello-dati/uri-eli.md) — chiave primaria stabile.
-- [Struttura del documento AKN](/modello-dati/struttura-akn.md) — articolo e comma.
+- [Il modello FRBR](/modello-dati/frbr.md): Work / Expression / Manifestation / Item.
+- [Identificazione: URI ELI](/modello-dati/uri-eli.md): chiave primaria stabile.
+- [Struttura del documento AKN](/modello-dati/struttura-akn.md): articolo e comma.
 - [Pipeline di trasformazione](/modello-dati/pipeline-trasformazione.md): panoramica e diagramma.
 - [Pipeline v0.1 (bozza operativa)](/modello-dati/pipeline/index.md): specifica per fasi, gate e contratto API.
 
@@ -32,7 +32,7 @@ Questa cartella descrive come Magistra rappresenta una norma italiana a partire 
 
 Distinte dal corpus pubblico: rappresentano il lavoro dell'utente sui documenti (vivono nel [database applicativo](/architettura/database-applicativo.md)). La versione OSS è single-utente: non c'è un'entità "utente" né account.
 
-- [Modello dati applicativo](/modello-dati/modello-applicativo.md) — panoramica e relazioni.
+- [Modello dati applicativo](/modello-dati/modello-applicativo.md): panoramica e relazioni.
 - [Progetto](/modello-dati/progetto.md)
 - [Documento](/modello-dati/documento.md) (file dell'utente)
 - [Conversazione](/modello-dati/conversazione.md)

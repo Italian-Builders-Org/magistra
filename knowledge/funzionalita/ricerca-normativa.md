@@ -25,7 +25,7 @@ Vale per la modalità semantica e ibrida; la ricerca per sola parola chiave rest
 ## Filtri
 
 - Tipo di atto (legge, decreto legislativo, codice…).
-- Data dell'atto e **data di [vigenza](/glossario/vigenza.md)** (cosa era in vigore a una certa data — vedi [multivigenza](/glossario/multivigenza.md)).
+- Data dell'atto e **data di [vigenza](/glossario/vigenza.md)** (cosa era in vigore a una certa data; vedi [multivigenza](/glossario/multivigenza.md)).
 - Fonte ([Normattiva](/fonti/normattiva.md), [EUR-Lex](/fonti/eur-lex.md), …).
 
 Ogni risultato riporta i metadati necessari alla [citazione verificabile](/glossario/citazione-verificabile.md) e linka al testo ufficiale.

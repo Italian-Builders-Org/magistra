@@ -12,10 +12,10 @@ Questa cartella mappa le fonti del diritto utilizzabili da Magistra, i formati d
 
 ## Concetti
 
-- [Normattiva — Open Data](/fonti/normattiva.md) — fonte primaria della legislazione statale italiana.
-- [Gazzetta Ufficiale](/fonti/gazzetta-ufficiale.md) — pubblicazione ufficiale degli atti.
-- [EUR-Lex](/fonti/eur-lex.md) — diritto dell'Unione Europea.
-- [Giurisprudenza](/fonti/giurisprudenza.md) — sentenze e orientamenti in formato aperto.
+- [Normattiva: Open Data](/fonti/normattiva.md): fonte primaria della legislazione statale italiana.
+- [Gazzetta Ufficiale](/fonti/gazzetta-ufficiale.md): pubblicazione ufficiale degli atti.
+- [EUR-Lex](/fonti/eur-lex.md): diritto dell'Unione Europea.
+- [Giurisprudenza](/fonti/giurisprudenza.md): sentenze e orientamenti in formato aperto.
 
 ## Principi di trattamento dei dati
 

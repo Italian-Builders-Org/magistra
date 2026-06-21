@@ -13,16 +13,16 @@ Insieme alle [funzionalità](/funzionalita/index.md) è la base del documento di
 
 ## Ambito e pianificazione
 
-- [Ambito MVP](/requisiti/mvp.md) — cosa entra nella prima release e cosa no.
-- [Roadmap](/requisiti/roadmap.md) — le fasi successive all'MVP.
+- [Ambito MVP](/requisiti/mvp.md): cosa entra nella prima release e cosa no.
+- [Roadmap](/requisiti/roadmap.md): le fasi successive all'MVP.
 
 ## Qualità e vincoli
 
-- [Requisiti non funzionali](/requisiti/requisiti-non-funzionali.md) — prestazioni, scalabilità, affidabilità, usabilità.
-- [Privacy e dati personali](/requisiti/privacy-e-dati-personali.md) — privacy by design e GDPR.
-- [Sicurezza](/requisiti/sicurezza.md) — cifratura, gestione dei segreti, controllo accessi.
-- [Licenze](/requisiti/licenze.md) — licenza del software e condizioni di riuso dei dati.
-- [Valutazione della qualità](/requisiti/valutazione-qualita.md) — come misuriamo l'affidabilità delle risposte.
+- [Requisiti non funzionali](/requisiti/requisiti-non-funzionali.md): prestazioni, scalabilità, affidabilità, usabilità.
+- [Privacy e dati personali](/requisiti/privacy-e-dati-personali.md): privacy by design e GDPR.
+- [Sicurezza](/requisiti/sicurezza.md): cifratura, gestione dei segreti, controllo accessi.
+- [Licenze](/requisiti/licenze.md): licenza del software e condizioni di riuso dei dati.
+- [Valutazione della qualità](/requisiti/valutazione-qualita.md): come misuriamo l'affidabilità delle risposte.
 
 ## Principi
 
