@@ -61,13 +61,49 @@ const mermaidCacheDir = path.join(path.dirname(outPath), '.mermaid');
 let ppConfigPath = null;
 let mermaidCount = 0;
 
+// Chromium di sistema: evita il download Puppeteer (spesso incompleto in locale).
+function resolveChromiumPath() {
+  const fromEnv = process.env.PUPPETEER_EXECUTABLE_PATH?.trim();
+  if (fromEnv && fs.existsSync(fromEnv)) return fromEnv;
+
+  const candidates = process.platform === 'darwin'
+    ? [
+        '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+        '/Applications/Chromium.app/Contents/MacOS/Chromium',
+      ]
+    : [
+        '/usr/bin/chromium',
+        '/usr/bin/chromium-browser',
+        '/usr/bin/google-chrome-stable',
+        '/usr/bin/google-chrome',
+      ];
+
+  for (const p of candidates) {
+    try {
+      if (fs.existsSync(p) && fs.statSync(p).isFile()) return p;
+    } catch {
+      // ignora path non leggibili
+    }
+  }
+  return null;
+}
+
+function writePuppeteerConfig() {
+  const cfg = { args: ['--no-sandbox'] };
+  const chromium = resolveChromiumPath();
+  if (chromium) {
+    cfg.executablePath = chromium;
+    console.log(`Mermaid: uso Chromium di sistema (${chromium})`);
+  }
+  ppConfigPath = path.join(mermaidCacheDir, 'puppeteer.json');
+  fs.writeFileSync(ppConfigPath, JSON.stringify(cfg));
+}
+
 // Renderizza un blocco Mermaid in PNG (cache per hash del contenuto).
 function renderMermaid(code) {
   fs.mkdirSync(mermaidCacheDir, { recursive: true });
   if (!ppConfigPath) {
-    // --no-sandbox: necessario in molti ambienti CI/Linux e innocuo in locale.
-    ppConfigPath = path.join(mermaidCacheDir, 'puppeteer.json');
-    fs.writeFileSync(ppConfigPath, JSON.stringify({ args: ['--no-sandbox'] }));
+    writePuppeteerConfig();
   }
   const hash = crypto.createHash('sha1').update(code).digest('hex').slice(0, 16);
   const png = path.join(mermaidCacheDir, `${hash}.png`);
