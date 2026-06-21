@@ -1,14 +1,14 @@
 ---
 type: Processo
-title: Extract references
+title: Estrazione riferimenti
 description: Grafo Riferimenti tra norme.
 tags: [pipeline, cross-reference]
-timestamp: 2026-06-19T00:00:00Z
+timestamp: 2026-06-21T00:00:00Z
 ---
 
-# Extract references
+# Estrazione riferimenti
 
-Fase 6. Può procedere in parallelo o dopo normalize.
+Fase 6. Può procedere in parallelo o dopo normalizzazione.
 
 ## Scopo
 

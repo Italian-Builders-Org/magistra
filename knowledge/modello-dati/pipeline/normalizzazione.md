@@ -1,14 +1,14 @@
 ---
 type: Processo
-title: Normalize
-description: Entità Norma, Versione, Unità dal ParsedDocument.
+title: Normalizzazione
+description: Entità Norma, Versione, Unità dal documento analizzato.
 tags: [pipeline, norma, versione, unita]
-timestamp: 2026-06-19T00:00:00Z
+timestamp: 2026-06-21T00:00:00Z
 ---
 
-# Normalize
+# Normalizzazione
 
-Fase 3. Input: output di [Parse](/modello-dati/pipeline/parse.md).
+Fase 3. Input: output di [Parsing](/modello-dati/pipeline/parsing.md).
 
 ## Scopo
 

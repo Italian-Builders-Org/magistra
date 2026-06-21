@@ -15,7 +15,7 @@ timestamp: 2026-06-21T00:00:00Z
 | Ruolo | Cosa leggere | Cosa puoi saltare |
 |-------|--------------|-------------------|
 | **Team** | Questo file + [panoramica](/modello-dati/pipeline/pipeline-di-trasformazione.md) + [contratto API](/modello-dati/pipeline/contratto-retrieval-api.md) | Dettaglio per-stage (salvo curiosità) |
-| **Implementer ingest** | Panoramica → stage `acquire` … `chunk` (in ordine) | `embed-index` se non tocchi vettori ancora |
+| **Implementer ingest** | Panoramica → stage `acquisizione` … `chunk` (in ordine) | `embed-index` se non tocchi vettori ancora |
 | **Implementer retrieval** | `embed-index` + `contratto-retrieval-api` | Ingest se fuori dal proprio perimetro |
 | **Reviewer** | Panoramica + tabella decisioni (sotto) + contratto API | n/a |
 | **Agente / contributor** | Leggere frontmatter `type`; rispettare legenda DECISO/TBD | Non inferire ciò che è TBD |
@@ -24,7 +24,7 @@ timestamp: 2026-06-21T00:00:00Z
 
 1. [pipeline-di-trasformazione.md](/modello-dati/pipeline/pipeline-di-trasformazione.md)
 2. [contratto-retrieval-api.md](/modello-dati/pipeline/contratto-retrieval-api.md)
-3. Stage in sequenza: acquire → parse → normalize → chunk → embed-index → extract-references → refresh
+3. Stage in sequenza: acquisizione → parsing → normalizzazione → chunk → embed-index → estrazione-riferimenti → refresh
 
 ## Legenda
 

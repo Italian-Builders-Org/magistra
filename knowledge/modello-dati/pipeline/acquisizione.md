@@ -1,12 +1,12 @@
 ---
 type: Processo
-title: Acquire
+title: Acquisizione
 description: Acquisizione artefatti grezzi da Normattiva con provenance.
 tags: [pipeline, normattiva]
-timestamp: 2026-06-19T00:00:00Z
+timestamp: 2026-06-21T00:00:00Z
 ---
 
-# Acquire
+# Acquisizione
 
 Fase 1. Vedi [panoramica](/modello-dati/pipeline/pipeline-di-trasformazione.md).
 

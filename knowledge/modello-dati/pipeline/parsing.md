@@ -1,14 +1,14 @@
 ---
 type: Processo
-title: Parse
+title: Parsing
 description: Parsing Akoma Ntoso e metadati FRBR/ELI.
 tags: [pipeline, akn, frbr]
-timestamp: 2026-06-19T00:00:00Z
+timestamp: 2026-06-21T00:00:00Z
 ---
 
-# Parse
+# Parsing
 
-Fase 2. Input: output di [Acquire](/modello-dati/pipeline/acquire.md).
+Fase 2. Input: output di [Acquisizione](/modello-dati/pipeline/acquisizione.md).
 
 ## Scopo
 

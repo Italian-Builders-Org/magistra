@@ -15,13 +15,13 @@ Entry point del **data plane**. Leggere prima: [Come leggere](/modello-dati/pipe
 ```mermaid
 flowchart LR
   subgraph ingest
-    A[Acquire] --> B[Parse]
-    B --> C[Normalize]
+    A[Acquisizione] --> B[Parsing]
+    B --> C[Normalizzazione]
   end
   subgraph index
     C --> D[Chunk]
     D --> E[Embed + Index]
-    E --> F[Extract references]
+    E --> F[Estrazione riferimenti]
   end
   subgraph ops
     F --> G[Refresh]
@@ -35,12 +35,12 @@ flowchart LR
 
 | # | Fase | Documento |
 |---|------|-----------|
-| 1 | Acquire | [acquire.md](/modello-dati/pipeline/acquire.md) |
-| 2 | Parse | [parse.md](/modello-dati/pipeline/parse.md) |
-| 3 | Normalize | [normalize.md](/modello-dati/pipeline/normalize.md) |
+| 1 | Acquisizione | [acquisizione.md](/modello-dati/pipeline/acquisizione.md) |
+| 2 | Parsing | [parsing.md](/modello-dati/pipeline/parsing.md) |
+| 3 | Normalizzazione | [normalizzazione.md](/modello-dati/pipeline/normalizzazione.md) |
 | 4 | Chunk | [chunk.md](/modello-dati/pipeline/chunk.md) |
 | 5 | Embed + Index | [embed-index.md](/modello-dati/pipeline/embed-index.md) |
-| 6 | Extract references | [extract-references.md](/modello-dati/pipeline/extract-references.md) |
+| 6 | Estrazione riferimenti | [estrazione-riferimenti.md](/modello-dati/pipeline/estrazione-riferimenti.md) |
 | 7 | Refresh | [refresh.md](/modello-dati/pipeline/refresh.md) |
 
 ## Documenti trasversali
@@ -58,5 +58,5 @@ Allineato ad [Ambito MVP](/requisiti/mvp.md): ingest di un **sottoinsieme** del 
 
 - **Ambito:** sottoinsieme del corpus (non l'intero catalogo Normattiva)
 - **Pilota implementativo:** insieme ristretto di atti scelto dal team (es. L. 241/1990 tra gli altri); può includere più atti e più versioni dove servono i test
-- **Percorso:** acquire → … → chunk → righe DB; pgvector **dopo** che righe e metadati sono corretti
+- **Percorso:** acquisizione → … → chunk → righe DB; pgvector **dopo** che righe e metadati sono corretti
 - **Fixture eval:** golden queries con ELI/articolo/comma attesi (**TBD**, chi le scrive)
