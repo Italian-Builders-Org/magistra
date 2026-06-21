@@ -8,7 +8,7 @@ timestamp: 2026-06-21T00:00:00Z
 
 # Normalizzazione
 
-Fase 3. Input: output di [Parsing](/modello-dati/pipeline/parsing.md).
+Fase 3. Input: output di [Parsing](/architettura/pipeline/parsing.md).
 
 ## Scopo
 

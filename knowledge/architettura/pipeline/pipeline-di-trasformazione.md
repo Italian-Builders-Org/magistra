@@ -10,7 +10,7 @@ timestamp: 2026-06-21T00:00:00Z
 
 Trasforma dati da [Normattiva Open Data](https://dati.normattiva.it/) (Akoma Ntoso / ELI) in un indice interrogabile con citazioni verificabili.
 
-**Stato:** bozza v0.1. Vedi [Come leggere](/modello-dati/pipeline/leggere.md).
+**Stato:** bozza v0.1. Vedi [Come leggere](/architettura/pipeline/leggere.md).
 
 ## Perché prima della pipeline, non pgvector
 
@@ -43,7 +43,7 @@ Dettaglio entità: [Norma](/modello-dati/norma.md), [Versione](/modello-dati/ver
 
 ## Fasi
 
-Vedi [indice pipeline](/modello-dati/pipeline/index.md). L'[estrazione riferimenti](/modello-dati/pipeline/estrazione-riferimenti.md) non dipende dagli embedding: può procedere dopo [normalizzazione](/modello-dati/pipeline/normalizzazione.md), in parallelo a chunk e embed.
+Vedi [indice pipeline](/architettura/pipeline/index.md). L'[estrazione riferimenti](/architettura/pipeline/estrazione-riferimenti.md) non dipende dagli embedding: può procedere dopo [normalizzazione](/architettura/pipeline/normalizzazione.md), in parallelo a chunk e embed.
 
 ## Chiavi naturali (deduplicazione)
 
@@ -107,7 +107,7 @@ Metadati obbligatori per citazione:
 
 ## Confine con API layer
 
-**DECISO:** retrieval come servizio separato (**H1**). Dettaglio: [contratto-retrieval-api.md](/modello-dati/pipeline/contratto-retrieval-api.md). Shortcut H3 in dev: **TBD con il team**.
+**DECISO:** retrieval come servizio separato (**H1**). Dettaglio: [contratto-retrieval-api.md](/architettura/pipeline/contratto-retrieval-api.md). Shortcut H3 in dev: **TBD con il team**.
 
 ## Responsabilità
 

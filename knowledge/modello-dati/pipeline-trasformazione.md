@@ -34,4 +34,4 @@ Le fasi attingono dalla fonte [Normattiva](/fonti/normattiva.md) e alimentano l'
 
 ## Specifica operativa v0.1
 
-Bozza dettagliata (fasi, gate, confine API, decisioni team): [pipeline/leggere.md](/modello-dati/pipeline/leggere.md).
+Bozza dettagliata (fasi, gate, confine API, decisioni team): [Come leggere la pipeline](/architettura/pipeline/leggere.md).

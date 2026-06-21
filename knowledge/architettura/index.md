@@ -46,6 +46,7 @@ flowchart TD
 - [Pianificazione delle query](/architettura/pianificazione-query.md)
 - [Flusso di una domanda (RAG agentico)](/architettura/flusso-rag.md)
 - [Deployment e self-hosting](/architettura/deployment.md)
+- [Pipeline di trasformazione (v0.1)](/architettura/pipeline/index.md): data plane, fasi, gate e [contratto retrieval](/architettura/pipeline/contratto-retrieval-api.md)
 
 ## Principi architetturali
 

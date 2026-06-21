@@ -8,7 +8,7 @@ timestamp: 2026-06-21T00:00:00Z
 
 # Refresh
 
-Fase 7. Riattiva [Acquisizione](/modello-dati/pipeline/acquisizione.md) su cambiamenti.
+Fase 7. Riattiva [Acquisizione](/architettura/pipeline/acquisizione.md) su cambiamenti.
 
 ## Scopo
 

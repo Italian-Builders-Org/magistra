@@ -8,7 +8,7 @@ timestamp: 2026-06-21T00:00:00Z
 
 # Pipeline di trasformazione
 
-Entry point del **data plane**. Leggere prima: [Come leggere](/modello-dati/pipeline/leggere.md).
+Entry point del **data plane**. Leggere prima: [Come leggere](/architettura/pipeline/leggere.md).
 
 ## Diagramma
 
@@ -36,18 +36,18 @@ flowchart LR
 
 | # | Fase | Documento |
 |---|------|-----------|
-| 1 | Acquisizione | [acquisizione.md](/modello-dati/pipeline/acquisizione.md) |
-| 2 | Parsing | [parsing.md](/modello-dati/pipeline/parsing.md) |
-| 3 | Normalizzazione | [normalizzazione.md](/modello-dati/pipeline/normalizzazione.md) |
-| 4 | Chunk | [chunk.md](/modello-dati/pipeline/chunk.md) |
-| 5 | Embed + Index | [embed-index.md](/modello-dati/pipeline/embed-index.md) |
-| 6 | Estrazione riferimenti | [estrazione-riferimenti.md](/modello-dati/pipeline/estrazione-riferimenti.md) |
-| 7 | Refresh | [refresh.md](/modello-dati/pipeline/refresh.md) |
+| 1 | Acquisizione | [acquisizione.md](/architettura/pipeline/acquisizione.md) |
+| 2 | Parsing | [parsing.md](/architettura/pipeline/parsing.md) |
+| 3 | Normalizzazione | [normalizzazione.md](/architettura/pipeline/normalizzazione.md) |
+| 4 | Chunk | [chunk.md](/architettura/pipeline/chunk.md) |
+| 5 | Embed + Index | [embed-index.md](/architettura/pipeline/embed-index.md) |
+| 6 | Estrazione riferimenti | [estrazione-riferimenti.md](/architettura/pipeline/estrazione-riferimenti.md) |
+| 7 | Refresh | [refresh.md](/architettura/pipeline/refresh.md) |
 
 ## Documenti trasversali
 
-- [Pipeline, panoramica e principi](/modello-dati/pipeline/pipeline-di-trasformazione.md)
-- [Contratto retrieval ↔ API](/modello-dati/pipeline/contratto-retrieval-api.md)
+- [Pipeline, panoramica e principi](/architettura/pipeline/pipeline-di-trasformazione.md)
+- [Contratto retrieval ↔ API](/architettura/pipeline/contratto-retrieval-api.md)
 
 ## Principio cardine (DECISO)
 

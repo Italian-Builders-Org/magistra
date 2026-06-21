@@ -8,7 +8,7 @@ timestamp: 2026-06-19T00:00:00Z
 
 # Chunk
 
-Fase 4. Input: Unità da [Normalizzazione](/modello-dati/pipeline/normalizzazione.md).
+Fase 4. Input: Unità da [Normalizzazione](/architettura/pipeline/normalizzazione.md).
 
 ## Scopo
 

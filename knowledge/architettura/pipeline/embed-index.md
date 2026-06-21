@@ -8,7 +8,7 @@ timestamp: 2026-06-21T00:00:00Z
 
 # Embed + Index
 
-Fase 5. Input: Chunk ammessi da [Chunk](/modello-dati/pipeline/chunk.md).
+Fase 5. Input: Chunk ammessi da [Chunk](/architettura/pipeline/chunk.md).
 
 ## Scopo
 
@@ -36,7 +36,7 @@ Non ri-embeddare se `(chunk_id, content_hash, model_id)` già presente.
 
 - Colonna `embedding vector(N)`; N dal modello attivo
 - Indici su metadati: `eli`, vigenza, `tipo_atto`
-- Ricerca: semantica + filtri (dettaglio retrieval nel [contratto API](/modello-dati/pipeline/contratto-retrieval-api.md))
+- Ricerca: semantica + filtri (dettaglio retrieval nel [contratto API](/architettura/pipeline/contratto-retrieval-api.md))
 
 ## Errori principali
 

@@ -8,7 +8,7 @@ timestamp: 2026-06-21T00:00:00Z
 
 # Parsing
 
-Fase 2. Input: output di [Acquisizione](/modello-dati/pipeline/acquisizione.md).
+Fase 2. Input: output di [Acquisizione](/architettura/pipeline/acquisizione.md).
 
 ## Scopo
 

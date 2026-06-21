@@ -8,7 +8,7 @@ timestamp: 2026-06-21T00:00:00Z
 
 # Acquisizione
 
-Fase 1. Vedi [panoramica](/modello-dati/pipeline/pipeline-di-trasformazione.md).
+Fase 1. Vedi [panoramica](/architettura/pipeline/pipeline-di-trasformazione.md).
 
 ## Scopo
 
