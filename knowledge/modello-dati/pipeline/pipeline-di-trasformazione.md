@@ -25,15 +25,21 @@ pgvector memorizza vettori su **righe già definite**. Senza accordo su chunk, m
 
 ## Modello dati in uscita
 
-```
-Norma (Work)
- └── Versione (Expression)
-      └── Unità (articolo / comma)
-           └── Chunk
-Riferimento (grafo norme; estrazione parallela a embed, dopo normalizzazione)
+```mermaid
+flowchart TD
+    N["Norma (Work)"]
+    V["Versione (Expression)"]
+    U["Unità (articolo / comma)"]
+    K[Chunk]
+    R["Riferimento (grafo norme)"]
+
+    N --> V
+    V --> U
+    U --> K
+    V -. estrazione parallela a embed .-> R
 ```
 
-Dettaglio entità: bundle OKF `modello-dati/` (import TBD).
+Dettaglio entità: [Norma](/modello-dati/norma.md), [Versione](/modello-dati/versione.md), [Unità](/modello-dati/unita.md), [Chunk](/modello-dati/chunk.md), [Riferimento](/modello-dati/riferimento.md).
 
 ## Fasi
 
