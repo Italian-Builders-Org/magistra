@@ -3,7 +3,7 @@ type: Processo
 title: Come leggere la documentazione pipeline
 description: Chiave di lettura per team, implementers, reviewer e agenti.
 tags: [pipeline, guida]
-timestamp: 2026-06-19T00:00:00Z
+timestamp: 2026-06-21T00:00:00Z
 ---
 
 # Come leggere la documentazione pipeline
@@ -38,7 +38,7 @@ timestamp: 2026-06-19T00:00:00Z
 
 | Tema | Decisione |
 |------|-----------|
-| MVP | Una legge pilota (es. L. 241/1990), una versione |
+| MVP | Sottoinsieme del corpus [Normattiva](/fonti/normattiva.md), allineato ad [Ambito MVP](/requisiti/mvp.md); pilota implementativo ristretto (es. poche leggi) |
 | Chunking | 1 comma = 1 chunk; split solo sopra soglia token (**TBD**) |
 | Vigenza | `query_date` assente → default **oggi** (testo vigente a oggi) |
 | Gate citazione | **G1** prod: respinto; **G2** dev: quarantena |

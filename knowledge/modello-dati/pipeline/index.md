@@ -3,7 +3,7 @@ type: Indice
 title: Pipeline di trasformazione
 description: Data plane da Normattiva all'indice interrogabile.
 tags: [pipeline]
-timestamp: 2026-06-19T00:00:00Z
+timestamp: 2026-06-21T00:00:00Z
 ---
 
 # Pipeline di trasformazione
@@ -54,9 +54,9 @@ flowchart LR
 
 ## MVP pilota (DECISO)
 
-Corpus ridotto per validare il flusso prima di scalare:
+Allineato ad [Ambito MVP](/requisiti/mvp.md): ingest di un **sottoinsieme** del corpus da Normattiva, sufficiente a validare ingest, chunk, citazioni e retrieval prima di scalare.
 
-- **Una legge**, es. L. 241/1990
-- **Una versione**: testo vigente a una data fissata
+- **Ambito:** sottoinsieme del corpus (non l'intero catalogo Normattiva)
+- **Pilota implementativo:** insieme ristretto di atti scelto dal team (es. L. 241/1990 tra gli altri); può includere più atti e più versioni dove servono i test
 - **Percorso:** acquire → … → chunk → righe DB; pgvector **dopo** che righe e metadati sono corretti
 - **Fixture eval:** golden queries con ELI/articolo/comma attesi (**TBD**, chi le scrive)

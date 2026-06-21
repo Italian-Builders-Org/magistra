@@ -3,7 +3,7 @@ type: Processo
 title: Pipeline di trasformazione, panoramica
 description: Principi, entità, gate e ordine di lavoro del data plane.
 tags: [pipeline, spec]
-timestamp: 2026-06-19T00:00:00Z
+timestamp: 2026-06-21T00:00:00Z
 ---
 
 # Pipeline di trasformazione, panoramica
@@ -89,7 +89,7 @@ Metadati obbligatori per citazione:
 ## Embedding (TBD post-pilota)
 
 - Interfaccia **`EmbeddingProvider`** swappabile (`model_id`, `dimensions`)
-- Scelta modello **dopo** pilota su L. 241/1990 (golden queries, hit@k, citazioni)
+- Scelta modello **dopo** pilota sul sottoinsieme MVP (golden queries, hit@k, citazioni)
 - Cambio `model_id` → **re-embed completo** dell'indice
 - I chunk devono rispettare `max_tokens` del modello attivo
 
@@ -124,7 +124,7 @@ Responsabile ingest: **TBD**.
 ## Prossimi passi
 
 1. Allineamento team su contratto API e H3 dev
-2. Vertical slice L. 241/1990 senza vettori
+2. Vertical slice sul sottoinsieme MVP senza vettori
 3. Golden queries (**TBD**)
 4. Scelta embedding (**TBD**)
 5. pgvector + smoke retrieval

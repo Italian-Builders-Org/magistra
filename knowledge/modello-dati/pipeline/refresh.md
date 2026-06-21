@@ -3,7 +3,7 @@ type: Processo
 title: Refresh
 description: Re-ingest incrementale e multivigenza.
 tags: [pipeline, ops, multivigenza]
-timestamp: 2026-06-19T00:00:00Z
+timestamp: 2026-06-21T00:00:00Z
 ---
 
 # Refresh
@@ -34,4 +34,4 @@ Allineare l'indice a Normattiva senza full re-ingest del corpus a ogni run.
 
 ## MVP
 
-Refresh su corpus pilota; comportamento full corpus **TBD** post-validazione.
+Refresh sul sottoinsieme MVP (vedi [Ambito MVP](/requisiti/mvp.md)); comportamento full corpus **TBD** post-validazione.

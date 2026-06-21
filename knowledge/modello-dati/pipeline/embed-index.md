@@ -3,7 +3,7 @@ type: Processo
 title: Embed + Index
 description: Vettori e scrittura su pgvector.
 tags: [pipeline, embedding, pgvector]
-timestamp: 2026-06-19T00:00:00Z
+timestamp: 2026-06-21T00:00:00Z
 ---
 
 # Embed + Index
@@ -24,7 +24,7 @@ Interfaccia swappabile:
 - `embed(texts)` → vettori
 - `max_tokens`: vincola chunking upstream
 
-**Non deciso in v0.1:** quale modello (es. all-MiniLM, Qwen3-Embedding, altro). Scelta dopo pilota L. 241/1990 con golden queries.
+**Non deciso in v0.1:** quale modello (es. all-MiniLM, Qwen3-Embedding, altro). Scelta dopo pilota sul sottoinsieme MVP con golden queries.
 
 **Regola:** cambio `model_id` → re-embed completo.
 
