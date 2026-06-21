@@ -21,10 +21,11 @@ flowchart LR
   subgraph index
     C --> D[Chunk]
     D --> E[Embed + Index]
-    E --> F[Estrazione riferimenti]
+    C --> F[Estrazione riferimenti]
   end
   subgraph ops
-    F --> G[Refresh]
+    E --> G[Refresh]
+    F --> G
     G -.-> A
   end
   E --> R[Retrieval service]

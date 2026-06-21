@@ -21,6 +21,7 @@ pgvector memorizza vettori su **righe già definite**. Senza accordo su chunk, m
 1. Ingest → parse → normalize → chunk → persistenza righe (senza vettori)
 2. Validazione su MVP pilota
 3. Solo allora pgvector + embedding
+4. **Estrazione riferimenti** in parallelo al percorso chunk → embed: dipende da testo/AKN già normalizzato, non dagli embedding
 
 ## Modello dati in uscita
 
@@ -29,14 +30,14 @@ Norma (Work)
  └── Versione (Expression)
       └── Unità (articolo / comma)
            └── Chunk
-Riferimento (grafo norme, fase extract)
+Riferimento (grafo norme; estrazione parallela a embed, dopo normalizzazione)
 ```
 
 Dettaglio entità: bundle OKF `modello-dati/` (import TBD).
 
 ## Fasi
 
-Vedi [indice pipeline](/modello-dati/pipeline/index.md).
+Vedi [indice pipeline](/modello-dati/pipeline/index.md). L'[estrazione riferimenti](/modello-dati/pipeline/estrazione-riferimenti.md) non dipende dagli embedding: può procedere dopo [normalizzazione](/modello-dati/pipeline/normalizzazione.md), in parallelo a chunk e embed.
 
 ## Chiavi naturali (deduplicazione)
 
