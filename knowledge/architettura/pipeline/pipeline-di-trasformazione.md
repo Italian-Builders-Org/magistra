@@ -16,7 +16,7 @@ Trasforma dati da [Normattiva Open Data](https://dati.normattiva.it/) (Akoma Nto
 
 pgvector memorizza vettori su **righe già definite**. Senza accordo su chunk, metadati di citazione e vigenza, il primo schema e il primo embed vanno probabilmente rifatti.
 
-**Ordine di lavoro (DECISO):**
+**Ordine di lavoro:**
 
 1. Ingest → parse → normalize → chunk → persistenza righe (senza vettori)
 2. Validazione su MVP pilota
@@ -67,7 +67,7 @@ Vedi [indice pipeline](/architettura/pipeline/index.md). L'[estrazione riferimen
 - Almeno un'unità articolo/comma con testo
 - Intervallo vigenza coerente
 
-### Gate 3 (pre-index, DECISO)
+### Gate 3 (pre-index)
 
 Metadati obbligatori per citazione:
 
@@ -81,13 +81,13 @@ Metadati obbligatori per citazione:
 | **Produzione (G1)** | Chunk incompleto → **respinto**, non indicizzato |
 | **Dev (G2)** | Chunk incompleto → **quarantena** per debug ingest |
 
-## Chunking (DECISO)
+## Chunking
 
 - Default: **1 comma = 1 chunk**
 - Se comma supera soglia token → split in sub-chunk con stessi metadati citazione
 - Soglia: **`MAX_CHUNK_TOKENS` = TBD** (dipende dal modello embedding scelto nel pilota)
 
-## Vigenza nel retrieval (DECISO)
+## Vigenza nel retrieval
 
 - `query_date` opzionale; se assente → **oggi**
 - Filtro: testo con valore alla data richiesta (`vigenza_da ≤ date` e `vigenza_a` null o `≥ date`)
@@ -107,7 +107,7 @@ Metadati obbligatori per citazione:
 
 ## Confine con API layer
 
-**DECISO:** retrieval come servizio separato (**H1**). Dettaglio: [contratto-retrieval-api.md](/architettura/pipeline/contratto-retrieval-api.md). Shortcut H3 in dev: **TBD con il team**.
+Retrieval come servizio separato (**H1**). Dettaglio: [contratto-retrieval-api.md](/architettura/pipeline/contratto-retrieval-api.md). Shortcut H3 in dev: **TBD con il team**.
 
 ## Responsabilità
 

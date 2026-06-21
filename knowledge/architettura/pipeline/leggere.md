@@ -18,7 +18,7 @@ timestamp: 2026-06-21T00:00:00Z
 | **Implementer ingest** | Panoramica → stage `acquisizione` … `chunk` (in ordine) | `embed-index` se non tocchi vettori ancora |
 | **Implementer retrieval** | `embed-index` + `contratto-retrieval-api` | Ingest se fuori dal proprio perimetro |
 | **Reviewer** | Panoramica + tabella decisioni (sotto) + contratto API | n/a |
-| **Agente / contributor** | Leggere frontmatter `type`; rispettare legenda DECISO/TBD | Non inferire ciò che è TBD |
+| **Agente / contributor** | Leggere frontmatter `type`; rispettare legenda TBD/BOZZA | Non inferire ciò che è TBD |
 
 ## Ordine consigliato
 
@@ -30,11 +30,10 @@ timestamp: 2026-06-21T00:00:00Z
 
 | Etichetta | Significato |
 |-----------|-------------|
-| **DECISO** | Allineato in discussione team (v0.1) |
 | **TBD** | Da chiudere prima di implementare quella parte |
 | **BOZZA** | Può cambiare con PR e review |
 
-## Decisioni DECISO (v0.1)
+## Riepilogo (v0.1)
 
 | Tema | Decisione |
 |------|-----------|

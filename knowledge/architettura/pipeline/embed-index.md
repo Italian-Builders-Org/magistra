@@ -14,7 +14,7 @@ Fase 5. Input: Chunk ammessi da [Chunk](/architettura/pipeline/chunk.md).
 
 Calcolare embedding e persistere vettore + metadati in PostgreSQL/pgvector.
 
-**Prerequisito (DECISO):** righe chunk corrette su MVP pilota **prima** di attivare questa fase a scala.
+**Prerequisito:** righe chunk corrette su MVP pilota **prima** di attivare questa fase a scala.
 
 ## EmbeddingProvider (TBD post-pilota)
 

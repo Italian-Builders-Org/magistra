@@ -49,11 +49,11 @@ flowchart LR
 - [Pipeline, panoramica e principi](/architettura/pipeline/pipeline-di-trasformazione.md)
 - [Contratto retrieval ↔ API](/architettura/pipeline/contratto-retrieval-api.md)
 
-## Principio cardine (DECISO)
+## Principio cardine
 
 > Ogni chunk in indice deve permettere una citazione verificabile: ELI + articolo/comma + vigenza. **In produzione, senza metadati completi il chunk non entra in indice (G1).**
 
-## MVP pilota (DECISO)
+## MVP pilota
 
 Allineato ad [Ambito MVP](/requisiti/mvp.md): ingest di un **sottoinsieme** del corpus da Normattiva, sufficiente a validare ingest, chunk, citazioni e retrieval prima di scalare.
 

@@ -14,7 +14,7 @@ Fase 4. Input: Unità da [Normalizzazione](/architettura/pipeline/normalizzazion
 
 Generare chunk per l'indice rispettando chunking e gate citazione.
 
-## Chunking (DECISO)
+## Chunking
 
 1. **Default:** 1 comma = 1 chunk
 2. **Split:** solo se comma > `MAX_CHUNK_TOKENS` (**TBD**)
@@ -28,7 +28,7 @@ Generare chunk per l'indice rispettando chunking e gate citazione.
 - `testo`
 - `content_hash` del testo chunk
 
-## Gate (DECISO)
+## Gate
 
 | Ambiente | Comportamento |
 |----------|---------------|

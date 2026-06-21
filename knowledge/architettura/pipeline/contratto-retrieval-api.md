@@ -10,7 +10,7 @@ timestamp: 2026-06-19T00:00:00Z
 
 **Stato:** bozza v0.1. Allineamento richiesto tra responsabili **data plane** e **API layer** (e team per H3 in dev).
 
-## Perimetri (DECISO)
+## Perimetri
 
 | Layer | Responsabilità |
 |-------|----------------|
@@ -19,7 +19,7 @@ timestamp: 2026-06-19T00:00:00Z
 
 L'API **non** legge/scrive pgvector direttamente. **Non** parsa AKN.
 
-## Architettura target: H1 (DECISO)
+## Architettura target: H1
 
 Retrieval esposto come servizio interno HTTP.
 
@@ -40,7 +40,7 @@ Retrieval esposto come servizio interno HTTP.
 }
 ```
 
-`query_date` opzionale: se assente, il servizio usa **oggi** (DECISO).
+`query_date` opzionale: se assente, il servizio usa **oggi**.
 
 **Risposta:**
 
