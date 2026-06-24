@@ -99,6 +99,13 @@ Magistra è un progetto **interamente ideato, gestito e costruito dalla communit
 
 Se vuoi contribuire o entrare in contatto con la community, parti da qui.
 
+## Contributors
+
+Un grazie speciale ai nostri contributori!
+<a href="https://github.com/go-skynet/LocalAI/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=go-skynet/LocalAI" />
+</a>
+
 ---
 
 ## Licenza
