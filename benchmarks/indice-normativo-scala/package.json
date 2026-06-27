@@ -1,0 +1,18 @@
+{
+  "name": "indice-normativo-scala-bench",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Benchmark di scala dell'indice normativo: PGlite+pgvector vs motore embedded nativo (controllo). Non sceglie un motore, alimenta la discussione su #13/#15/#27.",
+  "scripts": {
+    "sweep": "node run.mjs",
+    "bench:pglite": "node bench-pglite.mjs --n 100000 --dim 1024",
+    "bench:lancedb": "node bench-lancedb.mjs --n 100000 --dim 1024"
+  },
+  "license": "AGPL-3.0-or-later",
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.3",
+    "@electric-sql/pglite-pgvector": "^0.0.4",
+    "@lancedb/lancedb": "^0.30.0"
+  }
+}
