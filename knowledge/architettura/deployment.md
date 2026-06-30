@@ -10,7 +10,7 @@ timestamp: 2026-06-30T00:00:00Z
 
 Magistra è distribuita come **app desktop installabile**, non come stack di servizi. Il target è l'avvocato, che non deve installare Docker né gestire infrastruttura: scarica l'app e la usa.
 
-> L'approccio di distribuzione qui descritto è stabile: app desktop installabile, tutto in locale. Restano per il documento di design i soli dettagli di packaging (firma, auto-update) e gli script di setup.
+> L'approccio di distribuzione qui descritto è stabile: app desktop installabile, tutto in locale. I dettagli di packaging — framework desktop, modo di impacchettare il frontend, formati per OS, firma e auto-update — sono definiti in [packaging e distribuzione](./packaging-distribuzione.md).
 
 ## App desktop
 

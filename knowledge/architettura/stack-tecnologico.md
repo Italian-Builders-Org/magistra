@@ -35,6 +35,7 @@ Scelte di base confermate per l'MVP, coerenti con i principi qui descritti (defa
 | Orchestrazione RAG | **Pipeline interna a Magistra** | Il [flusso RAG agentico](./flusso-rag.md) (pianificazione query, reranking, fallback solo da fonti supportate, citazioni verificabili) è specifico del dominio: la pipeline è codice nostro, senza framework di orchestrazione come dipendenza core, per controllarne ogni passo e non ereditarne astrazioni e churn. |
 | Database applicativo | **PGlite (Postgres in WASM)** | Motore relazionale embedded per i dati dell'app: piccoli dati transazionali, zero dipendenze native. Vedi [database applicativo](./database-applicativo.md). |
 | Indice del corpus | **LanceDB** (motore vettoriale embedded nativo) | Disk-based e con prefiltro nativo per metadato: scala il corpus normativo oltre i limiti di `pgvector` in WASM. Vedi [indice normativo](./indice-normativo.md). |
+| Packaging desktop | **electron-builder + electron-updater** | Genera gli installer per OS, gestisce firma cross-platform e auto-update con un'unica configurazione; il [frontend](./frontend.md) entra nel bundle come export statico. Vedi [packaging e distribuzione](./packaging-distribuzione.md). |
 
 ## Confini dietro interfacce
 

@@ -53,6 +53,7 @@ L'ingest pesante del corpus non gira insieme all'assistente: è un job **batch s
 - [Pianificazione delle query](./pianificazione-query.md)
 - [Flusso di una domanda (RAG agentico)](./flusso-rag.md)
 - [Deployment](./deployment.md)
+- [Packaging e distribuzione desktop](./packaging-distribuzione.md)
 
 ## Principi architetturali
 
