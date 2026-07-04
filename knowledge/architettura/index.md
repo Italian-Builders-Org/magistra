@@ -3,7 +3,7 @@ type: Indice
 title: Architettura
 description: Componenti del sistema e flusso RAG. Bozza per orientare le scelte; non è ancora un'implementazione.
 tags: [architettura, rag, locale]
-timestamp: 2026-06-30T00:00:00Z
+timestamp: 2026-07-04T00:00:00Z
 ---
 
 # Architettura
@@ -54,6 +54,7 @@ L'ingest pesante del corpus non gira insieme all'assistente: è un job **batch s
 - [Flusso di una domanda (RAG agentico)](./flusso-rag.md)
 - [Deployment](./deployment.md)
 - [Packaging e distribuzione desktop](./packaging-distribuzione.md)
+- [Distribuzione e aggiornamento dell'indice normativo](./distribuzione-indice.md)
 
 ## Principi architetturali
 
