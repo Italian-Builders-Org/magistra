@@ -1,0 +1,43 @@
+# Packaging degli installer per OS con firma e auto-update (electron-updater).
+# Coerente con knowledge/architettura/packaging-distribuzione.md.
+# Non viene eseguito in CI (richiede certificati di firma e ambienti per OS):
+# la CI verifica lint, typecheck e `electron-vite build`.
+appId: co.italianbuilders.magistra
+productName: Magistra
+copyright: Italian Builders
+
+directories:
+  buildResources: build
+  output: release
+
+files:
+  - out/**
+  - package.json
+
+# Le dipendenze native (in futuro PGlite, LanceDB) restano fuori dall'asar.
+asarUnpack:
+  - resources/**
+
+publish:
+  provider: github
+
+win:
+  target:
+    - nsis
+nsis:
+  oneClick: false
+  perMachine: false
+
+mac:
+  target:
+    - target: dmg
+      arch: universal
+    - target: zip
+      arch: universal
+  category: public.app-category.productivity
+  hardenedRuntime: true
+
+linux:
+  target:
+    - AppImage
+  category: Office

@@ -1,0 +1,16 @@
+{
+  "name": "@magistra/worker",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Worker di ingest: processo Node separato dal backend per i job batch (parsing, embedding, indicizzazione).",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@magistra/shared": "*"
+  }
+}

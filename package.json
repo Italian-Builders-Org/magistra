@@ -5,15 +5,35 @@
   "description": "Piattaforma open source basata su AI per la legislazione italiana.",
   "license": "AGPL-3.0-or-later",
   "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "scripts": {
+    "dev": "npm run dev -w apps/desktop",
+    "build": "npm run build --workspaces --if-present",
+    "start": "npm run start -w apps/desktop",
+    "package": "npm run package -w apps/desktop",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "node scripts/validate-knowledge-base.mjs",
     "test:strict": "node scripts/validate-knowledge-base.mjs --strict",
     "validate:kb": "node scripts/validate-knowledge-base.mjs",
     "build:pdf": "node scripts/build-knowledge-pdf.mjs"
   },
   "devDependencies": {
+    "@eslint/js": "^9.17.0",
     "@mermaid-js/mermaid-cli": "^11.15.0",
+    "@types/node": "^22.10.0",
+    "eslint": "^9.17.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
     "marked": "^18.0.5",
-    "pdfkit": "^0.19.1"
+    "pdfkit": "^0.19.1",
+    "prettier": "^3.4.0",
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.19.0"
   }
 }
