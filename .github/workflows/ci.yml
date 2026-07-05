@@ -1,15 +1,13 @@
 name: CI
 
-# Runs on PRs into main/dev and on pushes to those branches (post-merge).
-# This is a placeholder pipeline: replace the steps in the `ci` job with real
-# lint / typecheck / test / build commands once the project stack lands.
+# Gira sulle PR verso main/dev e sui push a quei rami (post-merge).
 on:
   pull_request:
     branches: [main, dev]
   push:
     branches: [main, dev]
 
-# Cancel superseded runs on the same ref to save CI minutes.
+# Annulla le run superate sullo stesso ref per risparmiare minuti di CI.
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -22,7 +20,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Placeholder check
-        run: |
-          echo "No build/test steps configured yet."
-          echo "Replace this with real CI (install, lint, test, build) when the stack is in place."
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Valida knowledge base
+        run: npm test
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Formattazione
+        run: npm run format:check
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
