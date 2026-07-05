@@ -56,7 +56,7 @@ Lo stack è TypeScript-first ma non "puro": alcuni componenti non sono TypeScrip
 - **PGlite** — Postgres compilato a **WASM**: motore del [database applicativo](./database-applicativo.md). Confine: si usa via la sua interfaccia SQL/driver, come una libreria.
 - **LanceDB** — motore vettoriale **embedded nativo** (Rust, binari precompilati cross-platform) per l'[indice del corpus](./indice-normativo.md). Confine: in-process, dietro l'interfaccia dell'indice, impacchettato nel bundle. È l'escape hatch applicato a un requisito concreto e dimostrato (la scala dell'indice, vedi i criteri qui sotto).
 - **LibreOffice headless** — usato per la [conversione documenti](./conversione-documenti.md): sottoprocesso esterno invocato come job. Confine: processo separato con input/output su file.
-- **(Prospettico) runtime per modelli locali / embedding** — l'esecuzione di un LLM o di un modello di embedding in locale può richiedere un motore nativo (es. `llama.cpp` o un runtime ONNX). Confine: processo o servizio locale dietro un'interfaccia tipizzata, integrato come [provider configurabile](./provider-llm.md). Da introdurre solo quando il requisito dei modelli locali lo rende concreto, secondo i criteri qui sotto.
+- **Runtime dei modelli locali**. Gli LLM e i modelli di embedding self-hosted (Ollama, LM Studio, `llama.cpp`) **non** sono impacchettati né eseguiti da Magistra: è l'utente ad avviarli. Confine: servizio esterno raggiunto come endpoint OpenAI-compatibile dietro l'interfaccia del [provider configurabile](./provider-llm.md), senza alcun motore nativo nel bundle. Vedi [runtime dei modelli locali](./runtime-modelli-locali.md).
 
 ## Escape hatch: criteri
 
