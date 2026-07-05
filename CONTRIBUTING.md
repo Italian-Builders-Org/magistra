@@ -4,6 +4,19 @@ Grazie per l'interesse verso **Magistra**! Il progetto è agli inizi e ogni cont
 
 Il progetto è ideato, gestito e costruito dalla community **[Italian Builders](https://italianbuilders.co)** ([@italianbldrs](https://x.com/italianbldrs)): unisciti a noi.
 
+## Setup e utilizzo
+
+Prima di contribuire, leggi [`GETTING-STARTED.md`](GETTING-STARTED.md): spiega lo **stato attuale del repository** (knowledge base + script, senza app eseguibile), come clonare il progetto, i comandi `npm test` e `npm run build:pdf`, e come esplorare la documentazione in Obsidian.
+
+Setup minimo:
+
+```bash
+git clone https://github.com/Italian-Builders-Org/Italian-OSS-Legal-Platform.git
+cd Italian-OSS-Legal-Platform
+npm install
+npm test
+```
+
 ## Come puoi aiutare
 
 In questa fase il focus è la **knowledge base** e la pipeline dei dati. La knowledge base è un bundle **[Open Knowledge Format (OKF)](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing)** in [`knowledge/`](knowledge/): un concetto per file Markdown, con frontmatter YAML (`type` obbligatorio; `title`, `description`, `resource`, `tags`, `timestamp` opzionali) e `index.md` per ogni cartella. Aree dove serve aiuto:

@@ -10,6 +10,37 @@ Questo prodotto è ideato, gestito e costruito dalla community **[Italian Builde
 
 ---
 
+## Stato attuale
+
+Il progetto è agli **inizi**.
+In questa fase il repository contiene la **knowledge base** ([`knowledge/`](knowledge/)) e gli script per validarla e generarne un PDF — **non c'è ancora un'applicazione da avviare** (niente `npm run dev`, niente app desktop installabile).
+
+Le funzionalità elencate più sotto (chat, ricerca semantica, analisi documenti) descrivono l'**obiettivo** del prodotto, non ciò che è già eseguibile oggi.
+
+👉 **Per installazione, comandi e utilizzo pratico, leggi [`GETTING-STARTED.md`](GETTING-STARTED.md).**
+
+---
+
+## Inizia qui
+
+**Prerequisiti:** Node.js 18+ e Git.
+
+```bash
+git clone https://github.com/Italian-Builders-Org/Italian-OSS-Legal-Platform.git
+cd Italian-OSS-Legal-Platform
+npm install
+npm test
+```
+
+| Comando | Cosa fa |
+|---|---|
+| `npm test` | Valida la knowledge base |
+| `npm run build:pdf` | Genera un PDF della documentazione in `dist/` |
+
+Per esplorare i concetti con link e grafo, apri la cartella [`knowledge/`](knowledge/) come vault **Obsidian** (vedi [GETTING-STARTED.md](GETTING-STARTED.md#aprire-la-knowledge-base-in-obsidian)).
+
+---
+
 ## Visione
 
 Rendere il diritto italiano più accessibile e navigabile attraverso un assistente AI affidabile, trasparente e open source, che cita sempre le fonti e non "inventa" norme.
@@ -73,9 +104,10 @@ Utente → Frontend (Next.js)
 
 Il progetto è agli inizi e i contributi sono benvenuti: pipeline dati, parsing Akoma Ntoso, frontend, valutazione della qualità delle risposte, documentazione.
 
-1. Apri una *issue* per proposte o bug.
-2. Per modifiche, apri una *pull request* con descrizione chiara.
-3. Le linee guida dettagliate (`CONTRIBUTING.md`) saranno aggiunte a breve.
+1. Leggi [`GETTING-STARTED.md`](GETTING-STARTED.md) per setup e comandi disponibili.
+2. Apri una *issue* per proposte o bug.
+3. Per modifiche, apri una *pull request* con descrizione chiara ed esegui `npm test` prima di inviarla.
+4. Linee guida dettagliate: [`CONTRIBUTING.md`](CONTRIBUTING.md) e [`AGENTS.md`](AGENTS.md) (convenzioni della knowledge base).
 
 ---
 
@@ -91,6 +123,8 @@ La knowledge base del progetto è in [`knowledge/`](knowledge/), strutturata com
 ### Aprire la knowledge base in Obsidian
 
 La cartella [`knowledge/`](knowledge/) è anche un **vault [Obsidian](https://obsidian.md/)**: aprila come vault per esplorare i concetti e i loro collegamenti nella vista a grafo. La configurazione del vault è versionata in `knowledge/.obsidian/`, così chiunque cloni il repository ottiene la **stessa configurazione** (plugin, aspetto, impostazioni del grafo) senza doverla ricreare.
+
+Istruzioni passo passo: [GETTING-STARTED.md — Obsidian](GETTING-STARTED.md#aprire-la-knowledge-base-in-obsidian).
 
 Per contribuire: [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
