@@ -3,7 +3,7 @@ type: Processo
 title: Packaging e distribuzione desktop
 description: Scelte di packaging dell'app desktop Electron — frontend React buildato con Vite, electron-builder, formati di installazione per OS, firma e auto-update.
 tags: [packaging, desktop, electron, distribuzione]
-timestamp: 2026-07-01T00:00:00Z
+timestamp: 2026-07-04T00:00:00Z
 ---
 
 # Packaging e distribuzione desktop
@@ -74,7 +74,7 @@ L'aggiornamento dell'app usa **electron-updater** con **GitHub Releases** come c
 electron-builder pubblica insieme agli artefatti i file di metadati dell'updater (`latest.yml`, `latest-mac.yml`): all'avvio l'app li confronta con la versione installata, scarica in background il pacchetto firmato e lo applica al riavvio.
 L'auto-update richiede artefatti **firmati** (vedi sopra), soprattutto su macOS.
 
-L'aggiornamento dell'**applicazione** è distinto dall'aggiornamento dell'**[indice normativo](./indice-normativo.md)**: l'indice già "ingestato" viene distribuito e aggiornato separatamente (vedi [deployment — indice già pronto](./deployment.md)), così una nuova versione del corpus non impone una nuova build dell'app e viceversa.
+L'aggiornamento dell'**applicazione** è distinto dall'aggiornamento dell'**[indice normativo](./indice-normativo.md)**: l'indice già "ingestato" viene distribuito e aggiornato separatamente, su un proprio canale (vedi [distribuzione e aggiornamento dell'indice normativo](./distribuzione-indice.md)), così una nuova versione del corpus non impone una nuova build dell'app e viceversa.
 
 ```mermaid
 flowchart LR
