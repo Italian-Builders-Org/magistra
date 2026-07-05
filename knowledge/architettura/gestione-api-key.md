@@ -13,7 +13,7 @@ Permette di configurare in locale le chiavi per i [provider LLM](./provider-llm.
 ## Responsabilità
 
 - Inserimento e aggiornamento delle [chiavi API](../modello-dati/chiave-api.md) per i provider remoti (Anthropic, Google, OpenAI) e per gli endpoint [self-hosted](./runtime-modelli-locali.md): un servizio su `localhost` di norma non richiede chiave, mentre un server raggiunto sulla rete dello studio richiede spesso un'autenticazione, quindi la chiave è **opzionale** a seconda del setup.
-- **Conservazione [cifrata](../glossario/cifratura.md)** a riposo: mai in chiaro nel database né nei log (requisito di [sicurezza](../requisiti/sicurezza.md)).
+- **Conservazione [cifrata](../glossario/cifratura.md)** a riposo con AES-256-GCM: mai in chiaro nel database né nei log (requisito di [sicurezza](../requisiti/sicurezza.md), vedi il design di [cifratura e chiavi](./cifratura-e-chiavi.md)).
 - Selezione del modello attivo (model picker).
 - Test della connessione al provider prima dell'uso, con stato visibile in UI (configurato, non raggiungibile, modello mancante).
 - Le chiavi restano sulla macchina locale dell'utente (single-utente).

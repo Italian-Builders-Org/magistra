@@ -3,7 +3,7 @@ type: Entità Dati
 title: Chiave API
 description: Credenziale di un provider LLM configurata in locale, conservata cifrata.
 tags: [entita, api-key, cifratura]
-timestamp: 2026-06-25T00:00:00Z
+timestamp: 2026-07-05T00:00:00Z
 ---
 
 # Chiave API
@@ -14,7 +14,7 @@ La credenziale con cui la piattaforma interroga un [provider LLM](../architettur
 |---|---|
 | `id` | identificativo (chiave primaria) |
 | `provider` | Anthropic, Google, OpenAI, endpoint locale, … |
-| `valore_cifrato` | la chiave, conservata [cifrata](../glossario/cifratura.md) (mai in chiaro) |
+| `valore_cifrato` | la chiave, conservata [cifrata](../glossario/cifratura.md) con AES-256-GCM (mai in chiaro), vedi [cifratura e chiavi](../architettura/cifratura-e-chiavi.md) |
 | `creata_il` | data di inserimento |
 
 ## Note di sicurezza
