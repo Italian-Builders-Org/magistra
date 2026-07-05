@@ -3,7 +3,7 @@ type: Concetto
 title: Privacy e dati personali
 description: Privacy by design, controllo dell'utente sui propri documenti e conformità al GDPR nel trattamento dei dati.
 tags: [privacy, gdpr, dati-personali]
-timestamp: 2026-06-25T00:00:00Z
+timestamp: 2026-07-05T00:00:00Z
 ---
 
 # Privacy e dati personali
@@ -28,6 +28,6 @@ La risposta architetturale è diretta: Magistra è un'[app desktop locale](../ar
 
 - I file risiedono nell'[archiviazione locale](../architettura/archiviazione-documenti.md) sulla macchina dell'utente.
 - Le credenziali e le [API key](../architettura/gestione-api-key.md) sono [cifrate](../glossario/cifratura.md) — vedi [Sicurezza](./sicurezza.md).
-- Attenzione all'invio di dati ai [provider LLM](../architettura/provider-llm.md) esterni: va reso trasparente e, ove richiesto, evitabile con modelli locali o mitigato con un'[anonimizzazione reversibile](../architettura/anonimizzazione-reversibile.md) dei dati sensibili.
+- Attenzione all'invio di dati ai [provider LLM](../architettura/provider-llm.md) esterni: va reso trasparente e, ove richiesto, evitabile con modelli locali; un'[anonimizzazione reversibile](../architettura/anonimizzazione-reversibile.md) dei dati sensibili resta una mitigazione possibile ma **fuori dall'MVP**.
 
 > Nessun dato personale o documento riservato va inserito nel repository del progetto.

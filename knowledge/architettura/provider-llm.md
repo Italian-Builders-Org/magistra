@@ -3,7 +3,7 @@ type: Componente
 title: Provider LLM (configurabile)
 description: Matrice dei provider LLM supportati al lancio, remoti (Anthropic, Google, OpenAI) ed endpoint OpenAI-compatibili, dietro un'unica astrazione, con priorità ai modelli eseguiti in locale.
 tags: [llm, provider, locale]
-timestamp: 2026-07-01T00:00:00Z
+timestamp: 2026-07-05T00:00:00Z
 ---
 
 # Provider LLM (configurabile)
@@ -40,7 +40,8 @@ I runtime supportati (Ollama, LM Studio, llama.cpp) e il modo in cui Magistra vi
 
 ## Provider remoto: trasparenza e mitigazioni
 
-Quando l'utente sceglie un provider **remoto**, ciò che gli viene inviato esce dalla macchina: questa scelta dev'essere resa **trasparente** e può essere mitigata da un'[anonimizzazione reversibile](./anonimizzazione-reversibile.md), che sostituisce i dati sensibili con segnaposto prima dell'invio e li ripristina nella risposta.
+Quando l'utente sceglie un provider **remoto**, ciò che gli viene inviato esce dalla macchina: questa scelta dev'essere resa **trasparente** e resta una decisione esplicita dell'utente.
+Una possibile mitigazione futura è l'[anonimizzazione reversibile](./anonimizzazione-reversibile.md), che sostituirebbe i dati sensibili con segnaposto prima dell'invio e li ripristinerebbe nella risposta; è però **fuori dall'MVP**, dove la privacy nel caso remoto è governata dalla trasparenza e dalla priorità ai modelli locali.
 
 ## Degrado controllato
 
