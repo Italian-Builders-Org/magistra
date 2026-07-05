@@ -23,10 +23,10 @@ Permette di configurare in locale le credenziali e gli endpoint per i [provider 
 
 | Provider | Tipo segreto | Campi minimi | Note |
 |---|---|---|---|
-| OpenAI | API key | `api_key`, modello generazione, modello embedding | Supporta generazione ed embedding baseline. |
-| Anthropic | API key | `api_key`, modello generazione | Solo generazione nel MVP. |
-| Google Gemini | API key | `api_key`, modello generazione, eventuale modello embedding | Provider remoto alternativo. |
-| Ollama locale | Nessuna chiave di default | `base_url`, modello generazione, eventuale modello embedding | Runtime locale primario; default tipico `http://127.0.0.1:11434`. |
+| OpenAI-compatible gateway | API key | `base_url`, `api_key`, modello generazione, eventuale modello embedding | Default MVP remoto. Preset: OpenRouter e Vercel AI Gateway. |
+| Provider diretto | API key | provider, `api_key`, modello generazione, eventuale modello embedding | Preset per OpenAI, Anthropic e Google Gemini quando servono chiavi native o feature specifiche. |
+| llama.cpp locale | Nessuna chiave di default | `base_url`, modello generazione, eventuale modello embedding | Runtime locale primario; default tipico `http://127.0.0.1:8080` se avviato con `llama-server`. |
+| Ollama locale | Nessuna chiave di default | `base_url`, modello generazione, eventuale modello embedding | Runtime esterno supportato se già installato; default tipico `http://127.0.0.1:11434`. |
 | OpenAI-compatible custom | API key opzionale | `base_url`, `api_key` opzionale, modelli | Gateway aziendale, runtime self-hosted o servizio compatibile. |
 
 I nomi modello sono configurazione, non costanti del codice. La UI può proporre preset, ma deve permettere override manuale.

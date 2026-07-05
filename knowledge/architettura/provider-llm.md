@@ -14,27 +14,26 @@ Poiché la [riservatezza è la leva primaria](../requisiti/privacy-e-dati-person
 
 ## Decisione MVP
 
-Per la prima release si supportano quattro famiglie di provider:
+Per la prima release si supportano tre famiglie di provider, con un default pensato per ridurre il numero di chiavi da gestire:
 
 | Famiglia | Stato MVP | Uso principale | Note |
 |---|---|---|---|
-| **OpenAI** | Supportato | Generazione remota ed embedding baseline | Provider remoto ad alta qualità; richiede API key utente. |
-| **Anthropic Claude** | Supportato | Generazione remota di qualità | Provider remoto; non è provider embedding nel MVP. |
-| **Google Gemini** | Supportato | Generazione remota; embedding candidato | Provider remoto; utile come alternativa multi-provider. |
-| **Endpoint OpenAI-compatibile** | Supportato | Provider locali o gateway self-hosted | Include **Ollama** come runtime locale principale e altri endpoint compatibili configurati dall'utente. |
+| **Gateway OpenAI-compatibile** | Default MVP | Accesso remoto multi-modello con una sola API key | Preset iniziali: OpenRouter e Vercel AI Gateway. L'utente può indicare `base_url`, `api_key` e `model_id`. |
+| **Provider diretti** | Supportati come preset | OpenAI, Anthropic Claude, Google Gemini | Utili quando l'utente preferisce usare la chiave nativa del provider o feature specifiche non esposte dal gateway. |
+| **Endpoint locale OpenAI-compatibile** | Supportato | Modelli locali o self-hosted | Include `llama.cpp` come runtime locale primario e Ollama come endpoint esterno compatibile. |
 
 Non si introduce un provider proprietario di Magistra e non si fa proxy cloud: l'utente porta le proprie chiavi o usa un runtime locale.
 
 ## Runtime locale
 
-Il runtime locale principale per l'MVP è **Ollama**, perché:
+Il runtime locale principale per l'MVP è **llama.cpp** tramite `llama-server`, perché:
 
-- è installabile dagli utenti senza gestire toolchain native;
-- espone API locali e compatibilità OpenAI sufficiente per integrarlo dietro lo stesso adapter;
-- permette sia chat/generazione sia modelli di embedding locali;
-- rende chiaro lo stato operativo del modello (installato, in download, non disponibile).
+- può essere incluso o controllato dal packaging dell'app desktop;
+- evita di richiedere all'utente un'installazione separata solo per provare la modalità locale;
+- espone un server HTTP compatibile con l'adapter OpenAI-compatible;
+- supporta modelli GGUF quantizzati e profili di memoria prevedibili.
 
-`llama.cpp` resta un runtime di riferimento per scenari avanzati o integrazioni future: è utile quando servono controllo fine, packaging custom o benchmark, ma non è la UX primaria del MVP.
+**Ollama** resta supportato come runtime esterno: se l'utente lo ha già installato, Magistra può usarlo tramite endpoint locale OpenAI-compatible. Non è però il requisito minimo di UX per il primo avvio.
 
 ## Profili modello
 
@@ -42,10 +41,10 @@ I nomi modello non sono hard-coded nella logica di dominio: sono configurazione.
 
 | Profilo | Provider consigliati | Scopo |
 |---|---|---|
-| `remote-accurato` | OpenAI / Anthropic / Gemini, modello ragionamento o general purpose di fascia alta | Risposte complesse, analisi di documenti, casi ad alto rischio. |
-| `remote-rapido` | OpenAI / Anthropic / Gemini, modello veloce/economico | Chat ordinaria, bozze, query brevi, UX reattiva. |
-| `locale-standard` | Ollama con modello 7B-8B quantizzato | Uso offline/privacy-first su laptop recente; qualità da validare con eval. |
-| `locale-avanzato` | Ollama o runtime compatibile con modello 14B+ quantizzato | Qualità migliore in locale, richiede più RAM/VRAM. |
+| `remote-accurato` | Gateway OpenAI-compatible o provider diretto con modello ragionamento/general purpose di fascia alta | Risposte complesse, analisi di documenti, casi ad alto rischio. |
+| `remote-rapido` | Gateway OpenAI-compatible o provider diretto con modello veloce/economico | Chat ordinaria, bozze, query brevi, UX reattiva. |
+| `locale-standard` | `llama.cpp` con modello 7B-8B quantizzato | Uso offline/privacy-first su laptop recente; qualità da validare con eval. |
+| `locale-avanzato` | `llama.cpp`, Ollama o runtime compatibile con modello 14B+ quantizzato | Qualità migliore in locale, richiede più RAM/VRAM. |
 | `custom-openai-compatible` | Endpoint configurato dall'utente | Gateway aziendale, modello self-hosted o servizio compatibile. |
 
 Per il dominio giuridico italiano, nessun modello viene dichiarato "corretto" senza [valutazione qualità](../requisiti/valutazione-qualita.md). Ogni profilo deve passare casi di groundedness, citazioni, refusal e vigenza prima di diventare raccomandazione predefinita.
@@ -56,9 +55,9 @@ L'embedding è distinto dalla generazione. L'[indice normativo](./indice-normati
 
 Decisione iniziale:
 
-- **Baseline remota**: OpenAI `text-embedding-3-large` per qualità/multilingua quando l'utente accetta provider remoto.
-- **Profilo economico/remoto**: OpenAI `text-embedding-3-small` o alternativa equivalente del provider scelto, se la qualità resta sopra soglia.
-- **Profilo locale/offline**: modello embedding multilingua eseguito via Ollama o runtime compatibile, da confermare con benchmark sul corpus italiano.
+- **Baseline remota**: embedding OpenAI-compatible ad alta qualità/multilingua quando l'utente accetta provider remoto.
+- **Profilo economico/remoto**: modello embedding remoto più economico del gateway/provider scelto, se la qualità resta sopra soglia.
+- **Profilo locale/offline**: modello embedding multilingua eseguito via `llama.cpp`, Ollama o runtime compatibile, da confermare con benchmark sul corpus italiano.
 
 Per l'MVP distribuito agli utenti finali l'ingest completo non gira sul dispositivo: il team pubblica un indice già pronto. L'embedding locale serve per prototipi, utenti avanzati o indici personali, non come requisito per usare l'app.
 
