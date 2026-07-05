@@ -47,6 +47,7 @@ L'ingest pesante del corpus non gira insieme all'assistente: è un job **batch s
 - [Database applicativo](./database-applicativo.md)
 - [Archiviazione documenti (locale)](./archiviazione-documenti.md)
 - [Provider LLM (configurabile)](./provider-llm.md)
+- [Runtime dei modelli locali](./runtime-modelli-locali.md)
 - [Anonimizzazione reversibile dei dati sensibili](./anonimizzazione-reversibile.md)
 - [Gestione delle API key](./gestione-api-key.md)
 - [Conversione documenti](./conversione-documenti.md)
