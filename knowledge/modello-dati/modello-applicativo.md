@@ -3,7 +3,7 @@ type: Concetto
 title: Modello dati applicativo
 description: Panoramica delle entità dell'applicazione (progetto, documento, conversazione, messaggio, chiave API) e delle loro relazioni, distinte dal corpus normativo.
 tags: [modello-app, entita, relazioni]
-timestamp: 2026-06-20T00:00:00Z
+timestamp: 2026-07-05T00:00:00Z
 ---
 
 # Modello dati applicativo
@@ -36,4 +36,24 @@ flowchart TD
 - [Messaggio](./messaggio.md)
 - [Chiave API](./chiave-api.md)
 
-> Bozza concettuale: lo schema serve a ragionare sui dati del prodotto, non è ancora un'implementazione.
+## Schema logico
+
+| Entità | Chiave primaria | Campi relazione | Cardinalità |
+|---|---|---|---|
+| Progetto | `id` | — | contiene 0..N Documenti e 0..N Conversazioni |
+| Documento | `id` | `progetto_id` → Progetto.`id` | appartiene a 1 Progetto |
+| Conversazione | `id` | `progetto_id` → Progetto.`id` opzionale | appartiene a 0..1 Progetto |
+| Messaggio | `id` | `conversazione_id` → Conversazione.`id` | appartiene a 1 Conversazione |
+| Chiave API | `id` | nessuna FK utente | configurazione locale dell'istanza |
+
+Il modello resta single-utente: non esistono tabelle `utente`, `organizzazione`, membership o permessi. Queste capacità appartengono alla futura versione cloud gestita, non alla prima versione OSS.
+
+## Dati denormalizzati ammessi
+
+Alcuni campi possono restare JSON o snapshot denormalizzati per tracciabilità:
+
+- query generate e chunk usati in [Messaggio](./messaggio.md);
+- metadati di citazione prodotti dal retrieval;
+- cronologia versioni del [Documento](./documento.md), finché non serve una tabella dedicata.
+
+Questi snapshot non sostituiscono le relazioni principali: servono a riprodurre come una risposta è stata costruita.
