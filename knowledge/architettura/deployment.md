@@ -3,7 +3,7 @@ type: Processo
 title: Deployment
 description: Magistra è distribuita come app desktop installabile che gira interamente in locale, senza Docker né competenze sistemistiche.
 tags: [deployment, desktop, locale]
-timestamp: 2026-06-30T00:00:00Z
+timestamp: 2026-07-04T00:00:00Z
 ---
 
 # Deployment
@@ -22,6 +22,8 @@ Magistra è distribuita come **app desktop installabile**, non come stack di ser
 ## Indice già pronto
 
 L'[ingest del corpus](../modello-dati/pipeline-trasformazione.md) non viene eseguito sul dispositivo di ogni utente: è il team a svolgerlo in un **ambiente controllato** e a distribuire un **indice già "ingestato"**. L'indice pre-costruito è incluso nel bundle (o scaricato al primo avvio) e può essere **aggiornato**; l'utente "pro" resta libero di rieseguire l'ingest da sé, perché la relativa logica vive nel repository.
+
+Il canale e il meccanismo di aggiornamento dell'indice (pacchetto separato read-only, aggiornamento verificabile, atomico e reversibile) sono inquadrati in [distribuzione e aggiornamento dell'indice normativo](./distribuzione-indice.md).
 
 ## Configurazione
 

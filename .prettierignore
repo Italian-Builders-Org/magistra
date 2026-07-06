@@ -1,0 +1,11 @@
+node_modules
+dist
+out
+release
+package-lock.json
+# Gli script della knowledge base seguono le proprie convenzioni.
+scripts
+# La knowledge base è Markdown con regole proprie (una frase per riga, vedi
+# AGENTS.md): non va riformattata da Prettier.
+knowledge
+**/*.md

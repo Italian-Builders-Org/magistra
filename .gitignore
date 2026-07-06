@@ -1,8 +1,11 @@
 # Dipendenze
 node_modules/
 
-# Artefatti di build (PDF generato dalla knowledge base)
+# Artefatti di build (PDF della knowledge base, output dei pacchetti TS)
 dist/
+out/
+release/
+*.tsbuildinfo
 
 # Log e file di sistema
 npm-debug.log*

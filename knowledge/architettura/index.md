@@ -3,7 +3,7 @@ type: Indice
 title: Architettura
 description: Componenti del sistema e flusso RAG. Bozza per orientare le scelte; non è ancora un'implementazione.
 tags: [architettura, rag, locale]
-timestamp: 2026-06-30T00:00:00Z
+timestamp: 2026-07-05T00:00:00Z
 ---
 
 # Architettura
@@ -47,13 +47,16 @@ L'ingest pesante del corpus non gira insieme all'assistente: è un job **batch s
 - [Database applicativo](./database-applicativo.md)
 - [Archiviazione documenti (locale)](./archiviazione-documenti.md)
 - [Provider LLM (configurabile)](./provider-llm.md)
+- [Runtime dei modelli locali](./runtime-modelli-locali.md)
 - [Anonimizzazione reversibile dei dati sensibili](./anonimizzazione-reversibile.md)
 - [Gestione delle API key](./gestione-api-key.md)
+- [Cifratura a riposo e gestione delle chiavi](./cifratura-e-chiavi.md)
 - [Conversione documenti](./conversione-documenti.md)
 - [Pianificazione delle query](./pianificazione-query.md)
 - [Flusso di una domanda (RAG agentico)](./flusso-rag.md)
 - [Deployment](./deployment.md)
 - [Packaging e distribuzione desktop](./packaging-distribuzione.md)
+- [Distribuzione e aggiornamento dell'indice normativo](./distribuzione-indice.md)
 
 ## Principi architetturali
 

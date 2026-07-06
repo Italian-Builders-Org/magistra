@@ -3,7 +3,7 @@ type: Componente
 title: Database applicativo
 description: Database relazionale che conserva progetti, documenti, conversazioni e workflow, distinto dall'indice vettoriale del corpus normativo.
 tags: [database, pglite, modello-app]
-timestamp: 2026-06-30T00:00:00Z
+timestamp: 2026-07-01T00:00:00Z
 ---
 
 # Database applicativo
@@ -20,3 +20,4 @@ Conserva i **dati dell'applicazione**: [progetti](../modello-dati/progetto.md), 
 - Schema descritto nel [modello applicativo](../modello-dati/modello-applicativo.md).
 - Soggetto ai requisiti di [sicurezza](../requisiti/sicurezza.md) (segreti cifrati) e [privacy](../requisiti/privacy-e-dati-personali.md).
 - Migrazioni versionate per l'evoluzione dello schema (vedi [deployment](./deployment.md)).
+- **Un solo processo scrittore**: l'indice del corpus vive in uno store separato aggiornato fuori linea dal [worker](./worker-ingest.md), che non scrive qui; questa istanza PGlite ha come unico writer il processo di orchestrazione ([backend / API](./backend-api.md)). Non c'è quindi accesso concorrente di più processi alla stessa istanza — PGlite è single-connection.
