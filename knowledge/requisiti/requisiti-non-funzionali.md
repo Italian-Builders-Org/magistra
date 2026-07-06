@@ -28,7 +28,7 @@ Sicurezza e privacy hanno documenti dedicati: [Sicurezza](./sicurezza.md) e [Pri
 
 Le soglie qui sotto sono obiettivi di progetto verificabili, riferiti a due scale di corpus: la **scala MVP** (dell'ordine di 10⁵, fino a ~250k [chunk](../modello-dati/chunk.md)) e la **copertura piena** della legislazione statale (milioni di chunk).
 Restano fuori da questi valori i requisiti hardware dell'**inferenza LLM**: Magistra è un client e non ospita modelli, quindi il carico di generazione ed [embedding](../glossario/embedding.md) grava sul [runtime scelto dall'utente](../architettura/runtime-modelli-locali.md), non sull'app.
-I punti che dipendono da misure ancora in corso (variante dell'[indice](../architettura/indice-normativo.md) e modelli consigliati) sono demandati alla [valutazione di qualità](./valutazione-qualita.md).
+I punti che richiedono verifica empirica continua (recall dell'[indice](../architettura/indice-normativo.md), footprint e modelli consigliati) sono misurati nella [valutazione di qualità](./valutazione-qualita.md) senza riaprire il contratto architetturale della prima implementazione.
 
 ### Latenza
 
@@ -53,10 +53,10 @@ Riferite all'**app** (Electron + [PGlite](../architettura/database-applicativo.m
 
 ### Dimensione del corpus e dell'indice
 
-I vettori sono a **1024 dimensioni** (modello `snowflake-arctic-embed-m-v2.0`, open-weight, usato nel benchmark di scala), pari a 4 KB per vettore a piena precisione:
+I vettori sono a **768 dimensioni** (modello `snowflake-arctic-embed-m-v2.0`, open-weight, usato nel benchmark di scala), pari a circa 3 KB per vettore a piena precisione:
 
 - **Scala MVP** (~10⁵–250k chunk, indice flat esatto): ordine di **1–2 GB** su disco (vettori, testo e metadati di citazione).
-- **Copertura piena** (≈668k articoli della legislazione statale, milioni di chunk una volta segmentati per unità): a piena precisione l'ordine è di alcune **decine di GB**; la variante **RaBitQ** (1-bit con rerank a piena precisione) riconduce i soli vettori all'ordine dei **pochi GB**, compatibile con i segmenti da 2 GiB del [canale GitHub Releases](../architettura/distribuzione-indice.md). La scelta della variante dipende dalla recall sotto filtro misurata su dati veri e resta aperta.
+- **Copertura piena** (≈668k articoli della legislazione statale, milioni di chunk una volta segmentati per unità): a piena precisione l'ordine è di alcune **decine di GB**; la variante **RaBitQ** (1-bit con rerank a piena precisione) riconduce i soli vettori all'ordine dei **pochi GB**, compatibile con i segmenti da 2 GiB del [canale GitHub Releases](../architettura/distribuzione-indice.md). La variante distribuita è dichiarata nel manifest dell'indice e verificata contro la recall sotto filtro misurata su dati veri.
 
 L'indice si distribuisce come [pacchetto dati separato read-only](../architettura/distribuzione-indice.md): starter minimo nel bundle più download dell'indice completo al primo avvio.
 

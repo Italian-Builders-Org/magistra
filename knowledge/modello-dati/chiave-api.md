@@ -15,7 +15,9 @@ La credenziale con cui la piattaforma interroga un [provider LLM](../architettur
 | `id` | identificativo (chiave primaria) |
 | `provider` | Anthropic, Google, OpenAI, endpoint locale, … |
 | `valore_cifrato` | la chiave, conservata [cifrata](../glossario/cifratura.md) con AES-256-GCM (mai in chiaro), vedi [cifratura e chiavi](../architettura/cifratura-e-chiavi.md) |
+| `configurazione` | metadati non segreti: base URL, modello predefinito, profilo |
 | `creata_il` | data di inserimento |
+| `aggiornata_il` | data dell'ultima modifica |
 
 ## Note di sicurezza
 
