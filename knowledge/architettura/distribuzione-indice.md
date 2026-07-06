@@ -1,7 +1,7 @@
 ---
 type: Processo
 title: Distribuzione e aggiornamento dell'indice normativo
-description: Inquadramento (bozza) di come l'indice normativo pre-costruito viene veicolato e aggiornato come pacchetto dati separato, read-only e versionato, con i vincoli fermi e le decisioni ancora aperte.
+description: Contratto documentale per distribuire e aggiornare l'indice normativo pre-costruito come pacchetto dati separato, read-only, versionato e verificabile.
 tags: [distribuzione, indice, aggiornamento, versionamento]
 timestamp: 2026-07-04T00:00:00Z
 ---
@@ -11,8 +11,8 @@ timestamp: 2026-07-04T00:00:00Z
 Il [deployment](./deployment.md) stabilisce che l'[indice normativo](./indice-normativo.md) non viene "ingestato" sul dispositivo di ogni utente: è il team a costruirlo in un ambiente controllato e a distribuire un **indice già pronto**, con possibilità di aggiornamento.
 Il [packaging](./packaging-distribuzione.md) tiene poi distinto l'aggiornamento dell'**applicazione** (via `electron-updater` e GitHub Releases) da quello dell'**indice**.
 
-Questo documento **inquadra** il problema che quei due lasciano aperto (canale e meccanismo di aggiornamento dell'indice) e ne fissa i vincoli.
-È una **bozza**: i dettagli meccanici sono rimandati a un passo di design successivo, quando saranno fissati i [requisiti non funzionali](../requisiti/requisiti-non-funzionali.md) di spazio e dimensione (#27) e sarà disponibile una misura di recall su dati veri (vedi [indice normativo](./indice-normativo.md)).
+Questo documento fissa il contratto della prima implementazione per canale, pacchetto, verifica e attivazione dell'indice.
+Le decisioni qui raccolte sono vincoli logici della prima implementazione e si appoggiano ai [requisiti non funzionali](../requisiti/requisiti-non-funzionali.md) e alla strategia dell'[indice normativo](./indice-normativo.md).
 
 ## Vincoli fermi
 
@@ -44,12 +44,12 @@ Sono due assi distinti, da non confondere:
 Aggiornare l'artefatto rinfresca il corpus; interrogare una data resta un prefiltro sui metadati, non un cambio di artefatto.
 Ne segue che l'indice conserva anche le versioni storiche entro la copertura dichiarata, non solo il testo vigente.
 
-## Decisioni aperte
+## Decisioni della prima implementazione
 
-- **Granularità degli aggiornamenti**: snapshot completi (più semplici da rendere corretti) contro incrementali (più leggeri da scaricare). La [multivigenza](../glossario/multivigenza.md) complica gli incrementali, perché una nuova versione di una norma non è un puro append: chiude anche la [vigenza](../glossario/vigenza.md) dei chunk precedenti.
-- **Variante da distribuire e peso del pacchetto**: quale variante dell'[indice](./indice-normativo.md) si spedisce incide sulla dimensione del download, e il compromesso tra footprint e recall (specie la recall sotto filtro) dipende dalla misura su dati veri ancora in corso e dai target di spazio su disco (#27).
+- **Granularità degli aggiornamenti**: la prima implementazione distribuisce snapshot completi e versionati dell'indice. Gli incrementali sono esclusi dal contratto iniziale, perché la [multivigenza](../glossario/multivigenza.md) rende ogni aggiornamento più complesso di un puro append: una nuova versione di una norma chiude anche la [vigenza](../glossario/vigenza.md) dei chunk precedenti.
+- **Variante da distribuire e peso del pacchetto**: la variante segue la strategia definita nell'[indice normativo](./indice-normativo.md): flat/esatto alla scala MVP, IVF_HNSW a piena precisione quando il corpus cresce, IVF_HNSW + RaBitQ solo se il footprint del corpus pieno lo richiede. Ogni release dell'indice dichiara nel manifest variante, modello di embedding, dimensioni, schema dei metadati e peso del pacchetto.
 
 ## Dipendenze
 
 Poggia su [packaging e distribuzione desktop](./packaging-distribuzione.md) (#11) e sul pattern di accesso dell'indice (#13), entrambi chiusi.
-Interseca la misura di recall dell'indice, da cui dipende la scelta della variante e quindi il peso del pacchetto.
+Usa la misura di recall dell'indice e le soglie di spazio definite nei [requisiti non funzionali](../requisiti/requisiti-non-funzionali.md) per verificare la variante distribuita.

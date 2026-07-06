@@ -19,7 +19,7 @@ La decisione discende da tre ragioni, tutte già fissate altrove nell'architettu
 - **Gli strumenti maturi non superano l'escape hatch.** Presidio e LLM Guard sono in Python e richiedono modelli NER (spaCy); impacchettare un **runtime Python** dentro l'[app desktop Electron](./stack-tecnologico.md) su tutte le piattaforme non soddisfa i criteri dell'escape hatch (packaging cross-platform senza degradare l'installazione, costo di manutenzione sostenibile per una community TS/JS) a fronte di un beneficio solo parziale. Le librerie JS/TS equivalenti sono meno mature sull'italiano e sul lessico legale.
 - **L'MVP copre già il caso remoto in modo trasparente.** Quando l'utente sceglie un provider remoto, l'app rende **esplicita** la scelta (vedi [trasparenza e mitigazioni](./provider-llm.md)) e non ripiega mai in silenzio su un provider che fa uscire i dati: la privacy è governata dalla scelta consapevole dell'utente e dalla priorità ai modelli locali, non da un filtro automatico imperfetto.
 
-> Bozza concettuale: quanto segue descrive il layer come **possibile evoluzione**, non un componente dell'MVP.
+Quanto segue non fa parte del contratto della prima implementazione: è un'appendice tecnica per una versione successiva, subordinata alla decisione già chiusa di tenere il layer fuori dall'MVP.
 
 ## Come funzionerebbe (anonimizza → elabora → de-anonimizza)
 
@@ -30,9 +30,9 @@ La decisione discende da tre ragioni, tutte già fissate altrove nell'architettu
 
 Tutto ciò che è sensibile, insieme alla mappatura, resterebbe in locale; al provider arriverebbe solo testo anonimizzato.
 
-## Decisioni da validare se e quando si implementa
+## Vincoli per una versione successiva
 
-Prima di portare il layer in una versione futura vanno chiusi questi punti, oggi lasciati aperti proprio perché il componente è fuori dall'MVP:
+Se il layer verrà introdotto in una versione successiva, dovrà rispettare questi vincoli di design:
 
 - **Strumento e confine.** Rivalutare, alla luce dello stato dell'arte del momento, tra una **libreria JS/TS** di pseudonimizzazione (resta nello [stack](./stack-tecnologico.md), ma oggi meno matura sull'italiano legale) e **Microsoft Presidio / LLM Guard** come **sottoprocesso o servizio Python locale** dietro un confine netto (come già fa la [conversione documenti](./conversione-documenti.md) con LibreOffice). La scelta va misurata contro i criteri dell'escape hatch, non assunta a priori.
 - **Set di entità del dominio legale italiano.** Oltre alle PII generiche, servono i *recognizer* specifici: **codice fiscale**, **partita IVA**, **estremi di causa** (numero di ruolo, R.G.), nomi di assistiti e controparti. La copertura va tarata e verificata sull'italiano, non stimata.
