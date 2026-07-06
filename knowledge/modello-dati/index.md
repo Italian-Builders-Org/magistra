@@ -10,7 +10,7 @@ timestamp: 2026-07-05T00:00:00Z
 
 Questa cartella descrive come Magistra rappresenta una norma italiana a partire dai dati di Normattiva ([Akoma Ntoso](../glossario/akoma-ntoso.md) / [ELI](../glossario/eli.md)) e come la trasforma in unità interrogabili per la ricerca semantica e le citazioni.
 
-Lo schema qui descritto resta una **bozza concettuale descrittiva**, ma raccoglie le decisioni logiche già prese per guidare la prima implementazione, ingest e validazione senza vincolare il motore fisico.
+Lo schema qui descritto è il **contratto logico documentale** per la prima implementazione: non descrive ancora un'implementazione esistente, ma fissa le decisioni necessarie a guidare ingest, migrazioni e validazione senza vincolare il motore fisico.
 
 ## Concetti di base
 
