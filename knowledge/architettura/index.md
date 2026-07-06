@@ -10,7 +10,7 @@ timestamp: 2026-07-05T00:00:00Z
 
 Questa cartella descrive il **contratto architetturale documentale** per la prima implementazione di Magistra. Non è ancora la descrizione di un sistema completo già implementato, ma fissa le decisioni necessarie a guidare sviluppo, integrazione e validazione.
 
-I singoli documenti possono indicare esplicitamente parti ancora aperte o in bozza quando la decisione non è stata chiusa; le decisioni già fissate vanno invece trattate come vincoli logici della prima implementazione.
+I documenti di questa sezione raccolgono decisioni chiuse: vanno quindi trattati come vincoli logici della prima implementazione.
 
 ## Vista d'insieme
 
