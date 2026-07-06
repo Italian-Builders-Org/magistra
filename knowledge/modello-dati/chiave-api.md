@@ -23,6 +23,5 @@ La credenziale con cui la piattaforma interroga un [provider LLM](../architettur
 
 - Il valore non compare mai in chiaro nel database né nei log (requisito di [sicurezza](../requisiti/sicurezza.md)).
 - Le chiavi restano sulla macchina locale dell'utente (single-utente).
-- Non esiste FK verso un utente: la configurazione appartiene all'istanza locale.
 
 Parte del [modello dati applicativo](./modello-applicativo.md).

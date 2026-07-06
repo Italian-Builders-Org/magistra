@@ -46,7 +46,7 @@ flowchart TD
 | Messaggio | `id` | `conversazione_id` → Conversazione.`id` | appartiene a 1 Conversazione |
 | Chiave API | `id` | nessuna FK utente | configurazione locale dell'istanza |
 
-Il modello resta single-utente: non esistono tabelle `utente`, `organizzazione`, membership o permessi. Queste capacità appartengono alla futura versione cloud gestita, non alla prima versione OSS.
+Il modello resta single-utente: non esistono tabelle `utente`, `organizzazione`, membership o permessi.
 
 ## Dati denormalizzati ammessi
 
