@@ -14,7 +14,7 @@ Corrisponde al livello **Expression** del [modello FRBR](./frbr.md): una version
 |---|---|
 | `id` | identificativo versione, **chiave primaria** |
 | `norma_eli` | FK verso [Norma](./norma.md).`eli` |
-| `eli_expression` | URI ELI dell'Expression, se disponibile dalla fonte |
+| `iri_akn_expression` | IRI/URI dell'Expression Akoma Ntoso, se disponibile dalla fonte; non è un `eli:LegalExpression` del vocabolario ELI italiano |
 | `vigenza_da` / `vigenza_a` | intervallo di [vigenza](../glossario/vigenza.md); `vigenza_a` nullo indica versione aperta |
 | `stato` | vigente / abrogata / originaria |
 | `lingua` | lingua dell'Expression, default `it` |
@@ -27,4 +27,5 @@ Corrisponde al livello **Expression** del [modello FRBR](./frbr.md): una version
 - Una Versione appartiene a una sola [Norma](./norma.md).
 - Una Versione contiene molte [Unità](./unita.md).
 - La coppia (`norma_eli`, `vigenza_da`, `lingua`) deve essere unica nel profilo di corpus.
+- Gli URI Normattiva `ORIGINAL` e `CONSOLIDATED` non vanno trattati come ELI Expression: nel profilo italiano ELI la Expression codifica soprattutto la lingua, mentre gli URI consolidati sono risorse ELI di livello Work collegate tramite `eli:consolidates`.
 - Manifestation e Item FRBR non sono tabelle MVP: `source_uri`, `source_hash` e `acquisita_il` conservano la traccia minima della fonte fisica.

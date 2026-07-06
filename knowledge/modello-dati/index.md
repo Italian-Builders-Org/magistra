@@ -10,12 +10,12 @@ timestamp: 2026-07-05T00:00:00Z
 
 Questa cartella descrive come Magistra rappresenta una norma italiana a partire dai dati di Normattiva ([Akoma Ntoso](../glossario/akoma-ntoso.md) / [ELI](../glossario/eli.md)) e come la trasforma in unità interrogabili per la ricerca semantica e le citazioni.
 
-Lo schema qui descritto è il **contratto logico** per la prima implementazione: indipendente dal motore fisico, ma abbastanza preciso da guidare migrazioni, ingest e validazione.
+Lo schema qui descritto resta una **bozza concettuale descrittiva**, ma raccoglie le decisioni logiche già prese per guidare la prima implementazione, ingest e validazione senza vincolare il motore fisico.
 
 ## Concetti di base
 
 - [Il modello FRBR](./frbr.md) — Work / Expression / Manifestation / Item.
-- [Identificazione: URI ELI](./uri-eli.md) — chiave primaria stabile.
+- [Identificazione: URI ELI](./uri-eli.md) — identificatore normalizzato del Work logico.
 - [Struttura del documento AKN](./struttura-akn.md) — articolo e comma.
 - [Pipeline di trasformazione](./pipeline-trasformazione.md) — da Normattiva all'indice vettoriale.
 

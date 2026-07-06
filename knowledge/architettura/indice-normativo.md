@@ -16,7 +16,7 @@ L'indice del corpus normativo è un [Vector DB](../glossario/vector-db.md) per [
 
 Un benchmark di scala — eseguito da @MiPnamic — ha misurato l'indice del corpus dentro PGlite + `pgvector` (Postgres in WASM, indice HNSW) e ne ha mostrato i limiti alla scala del corpus normativo:
 
-- **Tetto di indirizzamento wasm32 (~4 GiB)**: a corpus pieno (milioni di [Chunk](../modello-dati/chunk.md) a 1024 dimensioni, più il grafo dell'indice) l'indice non entra nello spazio di indirizzamento della sandbox WASM.
+- **Tetto di indirizzamento wasm32 (~4 GiB)**: a corpus pieno (milioni di [Chunk](../modello-dati/chunk.md) a 768 dimensioni nel profilo `snowflake-arctic-embed-m-v2.0`, più il grafo dell'indice) l'indice non entra nello spazio di indirizzamento della sandbox WASM.
 - **Costruzione dell'indice fuori scala**: cresce in modo circa quadratico; già a 250k chunk — sotto la scala di un MVP — la build richiede ~17 minuti.
 - **Query filtrate lente a runtime**: i filtri per metadato (vigenza, tipo atto), qui indispensabili, degradano a centinaia di millisecondi e peggiorano con la dimensione, in tensione col requisito di [risposta interattiva](../requisiti/requisiti-non-funzionali.md).
 

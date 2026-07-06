@@ -12,7 +12,7 @@ Astratta dai formati di origine, indipendente dal database scelto. Corrisponde a
 
 | Campo | Descrizione |
 |---|---|
-| `eli` | URI [ELI](../glossario/eli.md) del Work, **chiave primaria** |
+| `eli` | URI [ELI](../glossario/eli.md) o identificatore normalizzato del Work logico, **chiave primaria** |
 | `tipo_atto` | legge, decreto legge, d.lgs., codice, … |
 | `numero` | numero dell'atto, se presente |
 | `data_atto` | data dell'atto |
@@ -24,5 +24,5 @@ Astratta dai formati di origine, indipendente dal database scelto. Corrisponde a
 ## Relazioni e vincoli
 
 - Una Norma ha una o più [Versioni](./versione.md).
-- `eli` è stabile e non dipende dalla singola versione temporale.
+- `eli` rappresenta il Work logico interno: per fonti come Normattiva va normalizzato a partire dagli URI disponibili, perché `ORIGINAL` e le diverse versioni `CONSOLIDATED` sono URI distinti e non vanno confusi con le singole [Versioni](./versione.md).
 - Non si duplica il testo della norma: il testo vive nelle [Unità](./unita.md) delle singole versioni.

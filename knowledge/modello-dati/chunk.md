@@ -17,14 +17,14 @@ Porzione di testo indicizzata per il retrieval. Vedi [chunk](../glossario/chunk.
 | `indice` | ordine del chunk dentro l'unità |
 | `testo` | porzione di testo |
 | `embedding_ref` | riferimento al [vettore](../glossario/embedding.md) nell'indice fisico |
-| `metadati_filtro` | scalar fields co-locati col vettore nell'indice: `vigenza_da`, `vigenza_a`, `tipo_atto`, fonte e altri filtri |
+| `metadati_filtro` | scalar fields co-locati col vettore nell'indice: `vigenza_da`, `vigenza_a` nullable, `tipo_atto`, fonte e altri filtri |
 | `metadati_citazione` | snapshot di eli, articolo, comma, vigenza → per la **[citazione](../glossario/citazione-verificabile.md)** |
 
 I Chunk sono prodotti dalla [pipeline di trasformazione](./pipeline-trasformazione.md) e popolano l'[indice normativo](../architettura/indice-normativo.md).
 
 ## Metadati nell'indice
 
-I metadati necessari al prefiltro non sono solo dati di display: devono stare nella stessa riga fisica dell'indice che contiene il vettore. L'[indice normativo](../architettura/indice-normativo.md) usa LanceDB con prefiltro nativo per metadato; quindi `vigenza_da`, `vigenza_a` e `tipo_atto` devono essere interrogabili come scalar fields prima della ricerca ANN.
+I metadati necessari al prefiltro non sono solo dati di display: devono stare nella stessa riga fisica dell'indice che contiene il vettore. L'[indice normativo](../architettura/indice-normativo.md) usa LanceDB con prefiltro nativo per metadato; quindi `vigenza_da`, `vigenza_a` e `tipo_atto` devono essere interrogabili come scalar fields prima della ricerca ANN. `vigenza_a` resta nullable: `null` indica un intervallo aperto, quindi una versione ancora in vigore.
 
 `metadati_citazione` resta invece lo snapshot usato per mostrare e verificare la fonte citata nella risposta. Può contenere ELI, articolo, comma, testo della citazione e una rappresentazione leggibile della vigenza, ma non sostituisce `metadati_filtro`.
 
@@ -34,6 +34,6 @@ I metadati necessari al prefiltro non sono solo dati di display: devono stare ne
 
 - Un Chunk appartiene a una sola [Unità](./unita.md).
 - La coppia (`unita_id`, `indice`) deve essere unica.
-- `metadati_filtro` è obbligatorio per ogni Chunk indicizzato: un chunk privo di `vigenza_da`, `vigenza_a` o `tipo_atto` non deve entrare nell'indice.
-- La vigenza per il filtro è un intervallo interrogabile (`vigenza_da` / `vigenza_a`), non una stringa di citazione.
+- `metadati_filtro` è obbligatorio per ogni Chunk indicizzato: un chunk privo di `vigenza_da` o `tipo_atto` non deve entrare nell'indice.
+- La vigenza per il filtro è un intervallo interrogabile (`vigenza_da` / `vigenza_a`), non una stringa di citazione; `vigenza_a = null` va trattato dal prefiltro come estremo superiore aperto.
 - `metadati_citazione` è denormalizzato per display e audit: non sostituisce le relazioni verso Versione e Unità.
