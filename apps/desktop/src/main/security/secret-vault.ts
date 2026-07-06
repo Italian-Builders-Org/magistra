@@ -1,6 +1,6 @@
 import { createCipheriv, createDecipheriv, randomBytes, timingSafeEqual } from 'node:crypto'
-import { chmod, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
-import { dirname, join } from 'node:path'
+import { chmod, mkdir, open, readFile, rename, rm, unlink } from 'node:fs/promises'
+import { basename, dirname, join } from 'node:path'
 
 export const CURRENT_SECRET_RECORD_SCHEMA = 1
 export const SECRET_RECORD_ALGORITHM = 'AES-256-GCM'
@@ -30,6 +30,15 @@ export interface WrappedDekRecord {
   backend_safe_storage: string | null
   creato_il: string
   aggiornato_il: string
+  chiavi_precedenti?: WrappedDekHistoryEntry[]
+}
+
+export interface WrappedDekHistoryEntry {
+  id_chiave: string
+  dek_avvolta: string
+  backend_safe_storage: string | null
+  creata_il: string
+  ritirata_il: string
 }
 
 export interface SafeStorageAdapter {
@@ -57,6 +66,22 @@ export interface DekRotationResult {
   records: EncryptedSecretRecord[]
 }
 
+interface PlainDek {
+  id_chiave: string
+  dek: Buffer
+}
+
+interface PlainPreviousDek extends PlainDek {
+  creata_il: string
+  ritirata_il: string
+}
+
+interface PlainKeyring {
+  record: WrappedDekRecord
+  active: PlainDek
+  previous: PlainPreviousDek[]
+}
+
 export class SecretVaultError extends Error {
   public readonly code: string
 
@@ -74,6 +99,9 @@ export class SecretVault {
   private readonly onLinuxWeakStorage?: (warning: LinuxSafeStorageWarning) => void
   private cachedDek: Buffer | null = null
   private cachedKeyId: string | null = null
+  private cachedDeks = new Map<string, Buffer>()
+  private initPromise: Promise<{ dek: Buffer; id_chiave: string }> | null = null
+  private keyringMutation: Promise<unknown> = Promise.resolve()
   private linuxWarningEmitted = false
 
   constructor(options: SecretVaultOptions) {
@@ -118,57 +146,78 @@ export class SecretVault {
   }
 
   async encryptSecret(secret: string): Promise<EncryptedSecretRecord> {
-    const { dek, id_chiave } = await this.loadOrCreateDek()
+    const { dek, id_chiave } = await this.runKeyringMutation(() => this.loadOrCreateDek())
     return encryptSecretWithDek(secret, dek, id_chiave)
   }
 
   async decryptSecret(record: EncryptedSecretRecord): Promise<string> {
-    const { dek, id_chiave } = await this.loadOrCreateDek()
-
-    if (record.id_chiave !== id_chiave) {
-      throw new SecretVaultError(
-        'Il record usa una chiave dati diversa da quella attiva.',
-        'KEY_ID_MISMATCH'
-      )
-    }
-
+    const dek = await this.loadDekById(record.id_chiave)
     return decryptSecretWithDek(record, dek)
   }
 
   async rotateKek(): Promise<WrappedDekRecord> {
-    const { dek, id_chiave } = await this.loadOrCreateDek()
-    return this.writeWrappedDek(dek, id_chiave, await this.readWrappedDek())
+    return this.runKeyringMutation(async () => {
+      const keyring = await this.loadPlainKeyring()
+      return this.writeWrappedDek(
+        keyring.active.dek,
+        keyring.active.id_chiave,
+        keyring.previous,
+        keyring.record
+      )
+    })
   }
 
   async rotateDek(records: EncryptedSecretRecord[]): Promise<DekRotationResult> {
-    const oldDek = await this.loadOrCreateDek()
-    const plainTexts = records.map((record) => {
-      if (record.id_chiave !== oldDek.id_chiave) {
-        throw new SecretVaultError(
-          'La rotazione DEK richiede record cifrati con la chiave attiva.',
-          'KEY_ID_MISMATCH'
-        )
+    return this.runKeyringMutation(async () => {
+      const keyring = await this.loadPlainKeyring()
+      const oldDek = keyring.active
+      const plainTexts = records.map((record) => {
+        if (record.id_chiave !== oldDek.id_chiave) {
+          throw new SecretVaultError(
+            'La rotazione DEK richiede record cifrati con la chiave attiva.',
+            'KEY_ID_MISMATCH'
+          )
+        }
+
+        return decryptSecretWithDek(record, oldDek.dek)
+      })
+
+      const nextDek = randomBytes(DEK_BYTES)
+      const nextKeyId = createKeyId()
+      await this.writeWrappedDek(
+        nextDek,
+        nextKeyId,
+        [
+          {
+            id_chiave: oldDek.id_chiave,
+            dek: oldDek.dek,
+            creata_il: keyring.record.creato_il,
+            ritirata_il: new Date().toISOString()
+          },
+          ...keyring.previous
+        ],
+        null
+      )
+      this.cachedDek = Buffer.from(nextDek)
+      this.cachedKeyId = nextKeyId
+      this.cachedDeks.set(nextKeyId, Buffer.from(nextDek))
+      this.cachedDeks.set(oldDek.id_chiave, Buffer.from(oldDek.dek))
+
+      return {
+        id_chiave: nextKeyId,
+        records: plainTexts.map((plainText) => encryptSecretWithDek(plainText, nextDek, nextKeyId))
       }
-
-      return decryptSecretWithDek(record, oldDek.dek)
     })
-
-    const nextDek = randomBytes(DEK_BYTES)
-    const nextKeyId = createKeyId()
-    await this.writeWrappedDek(nextDek, nextKeyId, null)
-    this.cachedDek = Buffer.from(nextDek)
-    this.cachedKeyId = nextKeyId
-
-    return {
-      id_chiave: nextKeyId,
-      records: plainTexts.map((plainText) => encryptSecretWithDek(plainText, nextDek, nextKeyId))
-    }
   }
 
   async revokeDek(): Promise<void> {
-    this.cachedDek = null
-    this.cachedKeyId = null
-    await rm(this.keyringPath, { force: true })
+    await this.runKeyringMutation(async () => {
+      this.cachedDek = null
+      this.cachedKeyId = null
+      this.cachedDeks.clear()
+      this.initPromise = null
+      await rm(this.keyringPath, { force: true })
+    })
   }
 
   async getWrappedDekRecord(): Promise<WrappedDekRecord | null> {
@@ -176,6 +225,24 @@ export class SecretVault {
   }
 
   private async loadOrCreateDek(): Promise<{ dek: Buffer; id_chiave: string }> {
+    if (this.initPromise) {
+      return this.initPromise
+    }
+
+    this.initPromise = this.doLoadOrCreateDek().finally(() => {
+      this.initPromise = null
+    })
+
+    return this.initPromise
+  }
+
+  private runKeyringMutation<T>(operation: () => Promise<T>): Promise<T> {
+    const run = this.keyringMutation.then(operation, operation)
+    this.keyringMutation = run.catch(() => undefined)
+    return run
+  }
+
+  private async doLoadOrCreateDek(): Promise<{ dek: Buffer; id_chiave: string }> {
     if (this.cachedDek && this.cachedKeyId) {
       return { dek: Buffer.from(this.cachedDek), id_chiave: this.cachedKeyId }
     }
@@ -185,24 +252,95 @@ export class SecretVault {
     const wrapped = await this.readWrappedDek()
 
     if (wrapped) {
-      const dek = this.unwrapDek(wrapped)
-      this.cachedDek = Buffer.from(dek)
+      const keyring = this.unwrapKeyring(wrapped)
+      const dek = keyring.active.dek
+      this.cachePlainKeyring(keyring)
       this.cachedKeyId = wrapped.id_chiave
       return { dek, id_chiave: wrapped.id_chiave }
     }
 
     const dek = randomBytes(DEK_BYTES)
     const id_chiave = createKeyId()
-    await this.writeWrappedDek(dek, id_chiave, null)
+    await this.writeWrappedDek(dek, id_chiave, [], null)
     this.cachedDek = Buffer.from(dek)
     this.cachedKeyId = id_chiave
+    this.cachedDeks.set(id_chiave, Buffer.from(dek))
     return { dek, id_chiave }
   }
 
-  private unwrapDek(record: WrappedDekRecord): Buffer {
-    const encryptedDek = Buffer.from(record.dek_avvolta, 'base64')
-    const plainDekBase64 = this.safeStorage.decryptString(encryptedDek)
-    const dek = Buffer.from(plainDekBase64, 'base64')
+  private async loadDekById(id_chiave: string): Promise<Buffer> {
+    const cached = this.cachedDeks.get(id_chiave)
+    if (cached) {
+      return Buffer.from(cached)
+    }
+
+    const keyring = await this.loadPlainKeyring()
+    const found =
+      keyring.active.id_chiave === id_chiave
+        ? keyring.active
+        : keyring.previous.find((entry) => entry.id_chiave === id_chiave)
+
+    if (!found) {
+      throw new SecretVaultError(
+        'Il record usa una chiave dati non presente nel keyring locale.',
+        'KEY_ID_NOT_FOUND'
+      )
+    }
+
+    return Buffer.from(found.dek)
+  }
+
+  private async loadPlainKeyring(): Promise<PlainKeyring> {
+    const wrapped = await this.readWrappedDek()
+
+    if (!wrapped) {
+      throw new SecretVaultError(
+        'Il keyring dei segreti non esiste: impossibile decifrare senza la DEK originale.',
+        'KEYRING_MISSING'
+      )
+    }
+
+    const keyring = this.unwrapKeyring(wrapped)
+    this.cachePlainKeyring(keyring)
+    return keyring
+  }
+
+  private unwrapKeyring(record: WrappedDekRecord): PlainKeyring {
+    return {
+      record,
+      active: {
+        id_chiave: record.id_chiave,
+        dek: this.unwrapDek(record.dek_avvolta)
+      },
+      previous: (record.chiavi_precedenti ?? []).map((entry) => ({
+        id_chiave: entry.id_chiave,
+        dek: this.unwrapDek(entry.dek_avvolta),
+        creata_il: entry.creata_il,
+        ritirata_il: entry.ritirata_il
+      }))
+    }
+  }
+
+  private cachePlainKeyring(keyring: PlainKeyring): void {
+    this.cachedDek = Buffer.from(keyring.active.dek)
+    this.cachedKeyId = keyring.active.id_chiave
+    this.cachedDeks.set(keyring.active.id_chiave, Buffer.from(keyring.active.dek))
+
+    for (const entry of keyring.previous) {
+      this.cachedDeks.set(entry.id_chiave, Buffer.from(entry.dek))
+    }
+  }
+
+  private unwrapDek(wrappedDek: string): Buffer {
+    let dek: Buffer
+
+    try {
+      const encryptedDek = Buffer.from(wrappedDek, 'base64')
+      const plainDekBase64 = this.safeStorage.decryptString(encryptedDek)
+      dek = Buffer.from(plainDekBase64, 'base64')
+    } catch {
+      throw new SecretVaultError('La DEK avvolta non puo essere decifrata.', 'DEK_UNWRAP_FAILED')
+    }
 
     if (dek.byteLength !== DEK_BYTES) {
       throw new SecretVaultError('La DEK salvata non ha lunghezza valida.', 'INVALID_DEK')
@@ -214,6 +352,7 @@ export class SecretVault {
   private async writeWrappedDek(
     dek: Buffer,
     id_chiave: string,
+    previousKeys: PlainPreviousDek[],
     previous: WrappedDekRecord | null
   ): Promise<WrappedDekRecord> {
     if (!this.safeStorage.isEncryptionAvailable()) {
@@ -224,7 +363,7 @@ export class SecretVault {
     }
 
     const now = new Date().toISOString()
-    const encryptedDek = this.safeStorage.encryptString(dek.toString('base64'))
+    const encryptedDek = this.wrapAndVerifyDek(dek)
     const record: WrappedDekRecord = {
       versione_schema: 1,
       algoritmo_avvolgimento: 'electron-safeStorage',
@@ -232,19 +371,38 @@ export class SecretVault {
       dek_avvolta: encryptedDek.toString('base64'),
       backend_safe_storage: this.getSelectedStorageBackend(),
       creato_il: previous?.creato_il ?? now,
-      aggiornato_il: now
+      aggiornato_il: now,
+      chiavi_precedenti: previousKeys.map((entry) => ({
+        id_chiave: entry.id_chiave,
+        dek_avvolta: this.wrapAndVerifyDek(entry.dek).toString('base64'),
+        backend_safe_storage: this.getSelectedStorageBackend(),
+        creata_il: entry.creata_il,
+        ritirata_il: entry.ritirata_il
+      }))
     }
 
-    await mkdir(dirname(this.keyringPath), { recursive: true })
-    await writeFile(this.keyringPath, `${JSON.stringify(record, null, 2)}\n`, { mode: 0o600 })
-    await chmod(this.keyringPath, 0o600)
+    await writeJsonAtomically(this.keyringPath, record)
     return record
+  }
+
+  private wrapAndVerifyDek(dek: Buffer): Buffer {
+    const encryptedDek = this.safeStorage.encryptString(dek.toString('base64'))
+    const unwrapped = this.unwrapDek(encryptedDek.toString('base64'))
+
+    if (!secureBufferEquals(dek, unwrapped)) {
+      throw new SecretVaultError(
+        'Verifica del wrapping della DEK fallita.',
+        'DEK_WRAP_VERIFICATION_FAILED'
+      )
+    }
+
+    return encryptedDek
   }
 
   private async readWrappedDek(): Promise<WrappedDekRecord | null> {
     try {
       const raw = await readFile(this.keyringPath, 'utf8')
-      return parseWrappedDekRecord(JSON.parse(raw))
+      return parseWrappedDekRecord(parseKeyringJson(raw))
     } catch (error) {
       if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
         return null
@@ -340,6 +498,64 @@ function assertEncryptedSecretRecord(record: EncryptedSecretRecord): void {
   }
 }
 
+function parseKeyringJson(raw: string): unknown {
+  try {
+    return JSON.parse(raw)
+  } catch {
+    throw new SecretVaultError(
+      'Il file keyring dei segreti e corrotto o incompleto.',
+      'INVALID_KEYRING_FILE'
+    )
+  }
+}
+
+async function writeJsonAtomically(filePath: string, value: unknown): Promise<void> {
+  const directory = dirname(filePath)
+  const fileName = basename(filePath)
+  const tempPath = join(
+    directory,
+    `.${fileName}.${process.pid}.${randomBytes(8).toString('hex')}.tmp`
+  )
+  const payload = `${JSON.stringify(value, null, 2)}\n`
+  let handle: Awaited<ReturnType<typeof open>> | null = null
+
+  await mkdir(directory, { recursive: true })
+
+  try {
+    handle = await open(tempPath, 'wx', 0o600)
+    await handle.writeFile(payload, 'utf8')
+    await handle.sync()
+    await handle.close()
+    handle = null
+    await chmod(tempPath, 0o600)
+    await rename(tempPath, filePath)
+    await chmod(filePath, 0o600)
+    await syncDirectoryBestEffort(directory)
+  } catch (error) {
+    if (handle) {
+      await handle.close()
+    }
+
+    await unlink(tempPath).catch(() => undefined)
+    throw error
+  }
+}
+
+async function syncDirectoryBestEffort(directory: string): Promise<void> {
+  let handle: Awaited<ReturnType<typeof open>> | null = null
+
+  try {
+    handle = await open(directory, 'r')
+    await handle.sync()
+  } catch {
+    // Alcune piattaforme non permettono fsync sulle directory.
+  } finally {
+    if (handle) {
+      await handle.close()
+    }
+  }
+}
+
 function parseWrappedDekRecord(value: unknown): WrappedDekRecord {
   if (!isWrappedDekRecord(value)) {
     throw new SecretVaultError('Record della DEK avvolta non valido.', 'INVALID_WRAPPED_DEK_RECORD')
@@ -362,7 +578,26 @@ function isWrappedDekRecord(value: unknown): value is WrappedDekRecord {
     (typeof record['backend_safe_storage'] === 'string' ||
       record['backend_safe_storage'] === null) &&
     typeof record['creato_il'] === 'string' &&
-    typeof record['aggiornato_il'] === 'string'
+    typeof record['aggiornato_il'] === 'string' &&
+    (record['chiavi_precedenti'] === undefined ||
+      (Array.isArray(record['chiavi_precedenti']) &&
+        record['chiavi_precedenti'].every(isWrappedDekHistoryEntry)))
+  )
+}
+
+function isWrappedDekHistoryEntry(value: unknown): value is WrappedDekHistoryEntry {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+
+  const record = value as Record<string, unknown>
+  return (
+    typeof record['id_chiave'] === 'string' &&
+    typeof record['dek_avvolta'] === 'string' &&
+    (typeof record['backend_safe_storage'] === 'string' ||
+      record['backend_safe_storage'] === null) &&
+    typeof record['creata_il'] === 'string' &&
+    typeof record['ritirata_il'] === 'string'
   )
 }
 

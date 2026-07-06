@@ -4,7 +4,6 @@
   "private": true,
   "description": "App desktop Electron di Magistra: processi main, preload e renderer gestiti da electron-vite.",
   "license": "AGPL-3.0-or-later",
-  "type": "module",
   "author": "Italian Builders",
   "main": "./out/main/index.js",
   "scripts": {
@@ -12,7 +11,7 @@
     "build": "electron-vite build",
     "start": "electron-vite preview",
     "package": "electron-vite build && electron-builder",
-    "test:security": "node --experimental-strip-types --test test/security/*.test.ts",
+    "test:security": "node --experimental-strip-types --experimental-default-type=module --test test/security/*.test.ts",
     "typecheck:node": "tsc --noEmit --composite false -p tsconfig.node.json",
     "typecheck:web": "tsc --noEmit --composite false -p tsconfig.web.json",
     "typecheck": "npm run typecheck:node && npm run typecheck:web"

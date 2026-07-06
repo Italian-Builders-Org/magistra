@@ -1,5 +1,5 @@
 import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto'
-import { mkdtemp, readFile } from 'node:fs/promises'
+import { mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import assert from 'node:assert/strict'
@@ -18,6 +18,7 @@ class MockSafeStorage implements SafeStorageAdapter {
   private readonly kek = randomBytes(DEK_BYTES)
   private readonly available: boolean
   private readonly backend: string
+  public corruptNextEncryption = false
 
   constructor(available = true, backend = 'gnome_libsecret') {
     this.available = available
@@ -29,6 +30,11 @@ class MockSafeStorage implements SafeStorageAdapter {
   }
 
   encryptString(plainText: string): Buffer {
+    if (this.corruptNextEncryption) {
+      this.corruptNextEncryption = false
+      return randomBytes(IV_BYTES + AUTH_TAG_BYTES + 8)
+    }
+
     const iv = randomBytes(IV_BYTES)
     const cipher = createCipheriv('aes-256-gcm', this.kek, iv, { authTagLength: AUTH_TAG_BYTES })
     const ciphertext = Buffer.concat([cipher.update(plainText, 'utf8'), cipher.final()])
@@ -63,6 +69,20 @@ test('cifra e decifra un segreto in round-trip', async () => {
   assert.equal(record.algoritmo, 'AES-256-GCM')
   assert.equal(Buffer.from(record.iv, 'base64').byteLength, IV_BYTES)
   assert.equal(Buffer.from(record.tag, 'base64').byteLength, AUTH_TAG_BYTES)
+})
+
+test('serializza la creazione della DEK al primo avvio concorrente', async () => {
+  const userDataPath = await mkdtemp(join(tmpdir(), 'magistra-secrets-'))
+  const vault = new SecretVault({ userDataPath, safeStorage: new MockSafeStorage() })
+
+  const [firstRecord, secondRecord] = await Promise.all([
+    vault.encryptSecret('sk-primo-segreto'),
+    vault.encryptSecret('sk-secondo-segreto')
+  ])
+
+  assert.equal(firstRecord.id_chiave, secondRecord.id_chiave)
+  assert.equal(await vault.decryptSecret(firstRecord), 'sk-primo-segreto')
+  assert.equal(await vault.decryptSecret(secondRecord), 'sk-secondo-segreto')
 })
 
 test('rileva una manomissione del ciphertext in decifratura', async () => {
@@ -105,6 +125,41 @@ test('non salva la DEK in chiaro su disco', async () => {
   assert.doesNotMatch(keyringFile, /sk-test-segreto/)
   assert.doesNotMatch(keyringFile, /"dek"\s*:/)
   assert.match(keyringFile, /"dek_avvolta"\s*:/)
+  assert.equal((await stat(join(userDataPath, 'secret-keyring.json'))).mode & 0o777, 0o600)
+})
+
+test('non crea una nuova DEK quando decifra senza keyring', async () => {
+  const userDataPath = await mkdtemp(join(tmpdir(), 'magistra-secrets-'))
+  const safeStorage = new MockSafeStorage()
+  const vault = new SecretVault({ userDataPath, safeStorage })
+  const record = await vault.encryptSecret('sk-test-segreto')
+  const keyringPath = join(userDataPath, 'secret-keyring.json')
+
+  await rm(keyringPath)
+
+  const coldVault = new SecretVault({ userDataPath, safeStorage })
+  await assert.rejects(
+    coldVault.decryptSecret(record),
+    (error) => error instanceof SecretVaultError && error.code === 'KEYRING_MISSING'
+  )
+  await assert.rejects(readFile(keyringPath, 'utf8'), { code: 'ENOENT' })
+})
+
+test('segnala esplicitamente un keyring troncato o corrotto', async () => {
+  const userDataPath = await mkdtemp(join(tmpdir(), 'magistra-secrets-'))
+  const safeStorage = new MockSafeStorage()
+  const vault = new SecretVault({ userDataPath, safeStorage })
+  const record = await vault.encryptSecret('sk-test-segreto')
+  const keyringPath = join(userDataPath, 'secret-keyring.json')
+  const keyringFile = await readFile(keyringPath, 'utf8')
+
+  await writeFile(keyringPath, keyringFile.slice(0, Math.floor(keyringFile.length / 2)), 'utf8')
+
+  const coldVault = new SecretVault({ userDataPath, safeStorage })
+  await assert.rejects(
+    coldVault.decryptSecret(record),
+    (error) => error instanceof SecretVaultError && error.code === 'INVALID_KEYRING_FILE'
+  )
 })
 
 test('avvisa su Linux quando safeStorage usa un backend debole', async () => {
@@ -152,4 +207,59 @@ test('ruota la KEK ri-avvolgendo la stessa DEK e ruota la DEK ricifrando i recor
   assert.notEqual(firstKeyring.dek_avvolta, rewrappedKeyring.dek_avvolta)
   assert.notEqual(rotated.id_chiave, firstRecord.id_chiave)
   assert.equal(await vault.decryptSecret(rotated.records[0]), 'sk-test-segreto')
+})
+
+test('la rotazione DEK conserva la chiave precedente per record non ancora ricifrati', async () => {
+  const userDataPath = await mkdtemp(join(tmpdir(), 'magistra-secrets-'))
+  const safeStorage = new MockSafeStorage()
+  const vault = new SecretVault({ userDataPath, safeStorage })
+
+  const firstRecord = await vault.encryptSecret('sk-primo-segreto')
+  const secondRecord = await vault.encryptSecret('sk-secondo-segreto')
+  const rotated = await vault.rotateDek([firstRecord])
+  const coldVault = new SecretVault({ userDataPath, safeStorage })
+
+  assert.equal(await coldVault.decryptSecret(rotated.records[0]), 'sk-primo-segreto')
+  assert.equal(await coldVault.decryptSecret(secondRecord), 'sk-secondo-segreto')
+})
+
+test('serializza rotazioni DEK concorrenti senza perdere record esistenti', async () => {
+  const userDataPath = await mkdtemp(join(tmpdir(), 'magistra-secrets-'))
+  const safeStorage = new MockSafeStorage()
+  const vault = new SecretVault({ userDataPath, safeStorage })
+  const firstRecord = await vault.encryptSecret('sk-primo-segreto')
+  const secondRecord = await vault.encryptSecret('sk-secondo-segreto')
+
+  const [firstRotation, secondRotation] = await Promise.allSettled([
+    vault.rotateDek([firstRecord]),
+    vault.rotateDek([secondRecord])
+  ])
+
+  assert.equal(firstRotation.status, 'fulfilled')
+  assert.equal(secondRotation.status, 'rejected')
+  assert.ok(secondRotation.reason instanceof SecretVaultError)
+  assert.equal(secondRotation.reason.code, 'KEY_ID_MISMATCH')
+  const coldVault = new SecretVault({ userDataPath, safeStorage })
+  assert.equal(await coldVault.decryptSecret(firstRotation.value.records[0]), 'sk-primo-segreto')
+  assert.equal(await coldVault.decryptSecret(secondRecord), 'sk-secondo-segreto')
+})
+
+test('rotateKek verifica il nuovo wrapping prima di sostituire il keyring', async () => {
+  const userDataPath = await mkdtemp(join(tmpdir(), 'magistra-secrets-'))
+  const safeStorage = new MockSafeStorage()
+  const vault = new SecretVault({ userDataPath, safeStorage })
+  const record = await vault.encryptSecret('sk-test-segreto')
+  const keyringPath = join(userDataPath, 'secret-keyring.json')
+  const keyringBefore = await readFile(keyringPath, 'utf8')
+
+  safeStorage.corruptNextEncryption = true
+
+  await assert.rejects(
+    vault.rotateKek(),
+    (error) => error instanceof SecretVaultError && error.code === 'DEK_UNWRAP_FAILED'
+  )
+  assert.equal(await readFile(keyringPath, 'utf8'), keyringBefore)
+
+  const coldVault = new SecretVault({ userDataPath, safeStorage })
+  assert.equal(await coldVault.decryptSecret(record), 'sk-test-segreto')
 })
