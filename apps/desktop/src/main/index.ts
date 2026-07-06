@@ -1,11 +1,14 @@
-import { app, BrowserWindow, protocol, net, shell } from 'electron'
+import { app, BrowserWindow, dialog, protocol, net, safeStorage, shell } from 'electron'
 import { join, normalize, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
+
+import { SecretVault, type LinuxSafeStorageWarning } from './security/secret-vault'
 
 // In sviluppo electron-vite espone l'URL del dev server (con HMR) in questa
 // variabile; in produzione non è impostata e il renderer è servito da `app://`.
 const rendererDevUrl = process.env['ELECTRON_RENDERER_URL']
 const isDev = !!rendererDevUrl
+let secretVault: SecretVault | null = null
 
 // Lo schema `app://` va dichiarato come privilegiato PRIMA che l'app sia pronta:
 // è standard (URL assoluti/relativi risolti come sul web), sicuro (contesto
@@ -65,7 +68,37 @@ function registerAppProtocol(): void {
   })
 }
 
+export function getSecretVault(): SecretVault {
+  if (!secretVault) {
+    throw new Error('Il vault dei segreti non e ancora inizializzato.')
+  }
+
+  return secretVault
+}
+
+function initializeSecretVault(): void {
+  secretVault = new SecretVault({
+    userDataPath: app.getPath('userData'),
+    safeStorage,
+    onLinuxWeakStorage: showLinuxSafeStorageWarning
+  })
+
+  secretVault.emitLinuxStorageWarningIfNeeded()
+}
+
+function showLinuxSafeStorageWarning(warning: LinuxSafeStorageWarning): void {
+  void dialog.showMessageBox({
+    type: 'warning',
+    title: 'Protezione dei segreti limitata',
+    message: 'Portachiavi di sistema non disponibile',
+    detail: `${warning.message}\n\nBackend safeStorage: ${warning.backend ?? 'non disponibile'}`,
+    buttons: ['OK']
+  })
+}
+
 app.whenReady().then(() => {
+  initializeSecretVault()
+
   if (!isDev) {
     registerAppProtocol()
   }
