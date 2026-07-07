@@ -11,6 +11,7 @@
     "build": "electron-vite build",
     "start": "electron-vite preview",
     "package": "electron-vite build && electron-builder",
+    "test:security": "node --experimental-strip-types --experimental-default-type=module --test test/security/*.test.ts",
     "typecheck:node": "tsc --noEmit --composite false -p tsconfig.node.json",
     "typecheck:web": "tsc --noEmit --composite false -p tsconfig.web.json",
     "typecheck": "npm run typecheck:node && npm run typecheck:web"

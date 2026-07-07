@@ -20,6 +20,7 @@
     "format:check": "prettier --check .",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "node scripts/validate-knowledge-base.mjs",
+    "test:security": "npm run test:security -w apps/desktop",
     "test:strict": "node scripts/validate-knowledge-base.mjs --strict",
     "validate:kb": "node scripts/validate-knowledge-base.mjs",
     "build:pdf": "node scripts/build-knowledge-pdf.mjs"
