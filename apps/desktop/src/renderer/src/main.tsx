@@ -1,7 +1,9 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { HashRouter } from 'react-router'
 import { App } from './App'
 import './app.css'
+import { TooltipProvider } from '@magistra/ui/components/tooltip'
 
 const rootElement = document.getElementById('root')
 if (!rootElement) {
@@ -10,6 +12,10 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <App />
+    <HashRouter>
+      <TooltipProvider>
+        <App />
+      </TooltipProvider>
+    </HashRouter>
   </StrictMode>
 )
