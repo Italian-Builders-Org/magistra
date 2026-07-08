@@ -1,5 +1,5 @@
 import {
-  Sidebar,
+  Sidebar as UISidebar,
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
@@ -11,12 +11,12 @@ import {
 import { SettingsIcon } from 'lucide-react'
 import { NavLink, useMatch } from 'react-router'
 
-export function AppSidebar() {
+export function Sidebar() {
   const isHomeActive = !!useMatch({ path: '/', end: true })
   const isSettingsActive = !!useMatch('/settings')
 
   return (
-    <Sidebar>
+    <UISidebar>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -45,6 +45,6 @@ export function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
-    </Sidebar>
+    </UISidebar>
   )
 }
