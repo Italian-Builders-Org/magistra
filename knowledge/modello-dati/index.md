@@ -3,7 +3,7 @@ type: Indice
 title: Modello dati e parsing Akoma Ntoso
 description: Come la piattaforma rappresenta una norma italiana a partire da Normattiva (Akoma Ntoso / ELI) e la trasforma in unità interrogabili.
 tags: [modello-dati, akoma-ntoso, eli, rag]
-timestamp: 2026-07-05T00:00:00Z
+timestamp: 2026-07-12T00:00:00Z
 ---
 
 # Modello dati e parsing Akoma Ntoso
@@ -46,6 +46,7 @@ Distinte dal corpus pubblico: rappresentano il lavoro dell'utente sui documenti 
 - [Modello dati applicativo](./modello-applicativo.md) — panoramica e relazioni.
 - [Progetto](./progetto.md)
 - [Documento](./documento.md) (file dell'utente)
+- [Documento strutturato](./documento-strutturato.md) (Document AST e artefatti AI-ready)
 - [Conversazione](./conversazione.md)
 - [Messaggio](./messaggio.md)
 - [Chiave API](./chiave-api.md)
