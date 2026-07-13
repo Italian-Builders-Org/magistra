@@ -104,6 +104,7 @@ La knowledge base del progetto è in [`knowledge/`](knowledge/), strutturata com
 - [Modello dati e parsing Akoma Ntoso](knowledge/modello-dati/index.md) — FRBR, ELI, schema interno e pipeline.
 - [Architettura](knowledge/architettura/index.md) — componenti e flusso RAG.
 - [Glossario](knowledge/glossario/index.md) — termini giuridici e tecnici.
+- [UI library](packages/ui/README.md) — componenti condivisi e aggiunta di componenti shadcn.
 
 Per setup, avvio dell'app Electron, validazione, generazione PDF e apertura della knowledge base in Obsidian, usa [`GETTING-STARTED.md`](GETTING-STARTED.md).
 
