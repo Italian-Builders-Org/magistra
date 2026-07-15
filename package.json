@@ -16,6 +16,7 @@
     "package": "npm run package -w apps/desktop",
     "package:desktop": "npm run package -w apps/desktop",
     "package:desktop:dir": "npm run package:dir -w apps/desktop",
+    "package:desktop:dir:from-build": "npm run package:dir:from-build -w apps/desktop",
     "package:desktop:win": "npm run package:win -w apps/desktop",
     "package:desktop:mac": "npm run package:mac -w apps/desktop",
     "package:desktop:linux": "npm run package:linux -w apps/desktop",

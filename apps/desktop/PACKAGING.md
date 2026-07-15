@@ -9,6 +9,7 @@ Tutti i comandi partono dalla radice del repository.
 | Comando | Output |
 |---|---|
 | `npm run package:desktop:dir` | App spacchettata per smoke test locale |
+| `npm run package:desktop:dir:from-build` | App spacchettata riusando una build `out/` esistente |
 | `npm run package:desktop:win` | Installer Windows NSIS `.exe` |
 | `npm run package:desktop:mac` | DMG e ZIP macOS universali |
 | `npm run package:desktop:linux` | AppImage Linux |
@@ -30,6 +31,8 @@ La configurazione abilita Hardened Runtime e usa le entitlement minime richieste
 
 Per la release Windows il percorso previsto dalla knowledge base è Authenticode tramite Azure Trusted Signing.
 Le credenziali Azure e i dati del profilo di firma devono vivere nei secret della pipeline di release, non nel repository.
+Il target Windows dell'MVP è x64, coerente con la piattaforma dei primi tester.
+ARM64 verrà abilitato dopo avere verificato dipendenze native, firma e installer su Windows on ARM.
 
 ## Canali di release
 

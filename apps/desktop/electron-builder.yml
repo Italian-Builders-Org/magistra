@@ -15,9 +15,6 @@ files:
   - out/**
   - package.json
 
-extraMetadata:
-  main: out/main/index.js
-
 # Le dipendenze native (in futuro PGlite, LanceDB) restano fuori dall'asar.
 asar: true
 asarUnpack:
@@ -29,6 +26,8 @@ publish:
   repo: magistra
 
 win:
+  # Target MVP per i primi tester Windows. ARM64 verrà abilitato dopo la
+  # validazione di dipendenze native, firma e installer sulla piattaforma.
   target:
     - target: nsis
       arch:
