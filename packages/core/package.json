@@ -16,8 +16,11 @@
     }
   },
   "scripts": {
-    "test": "node --experimental-strip-types --experimental-default-type=module --test 'test/*.test.ts'",
+    "test": "node --experimental-strip-types --test 'test/*.test.ts'",
     "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "engines": {
+    "node": ">=22.6"
   },
   "dependencies": {
     "@magistra/shared": "*",

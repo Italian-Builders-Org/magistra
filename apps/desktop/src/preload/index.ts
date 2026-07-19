@@ -26,8 +26,11 @@ async function invoke<K extends OperationName>(
   })
 
   if (!response.ok) {
+    // Ricostruiamo l'errore lato renderer conservando il codice stabile sia in
+    // `name` sia in `code`, cosi da poterlo discriminare come su `OperationError`.
     const error = new Error(response.error.message)
     error.name = response.error.code
+    ;(error as { code?: string }).code = response.error.code
     throw error
   }
 

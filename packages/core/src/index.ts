@@ -78,6 +78,11 @@ export function createCore(): Core {
     payload: unknown
   ): Promise<OperationResponse<K>> {
     const contract = operationContracts[operation]
+    if (!contract) {
+      // Difesa per chiamanti non tipizzati (l'adattatore IPC valida gia
+      // l'operazione, ma `invoke` puo essere chiamata anche altrove).
+      throw new OperationError('UNKNOWN_OPERATION', `Operazione sconosciuta: «${operation}»`)
+    }
 
     const parsedRequest = contract.request.safeParse(payload)
     if (!parsedRequest.success) {
