@@ -29,6 +29,7 @@
     "test": "node scripts/validate-knowledge-base.mjs",
     "test:unit": "npm run test --workspaces --if-present",
     "test:core": "npm run test -w packages/core",
+    "test:provider": "npm run test -w packages/provider",
     "test:worker": "npm run test -w packages/worker",
     "test:index": "npm run test -w packages/index",
     "test:data": "npm run test -w packages/data",
