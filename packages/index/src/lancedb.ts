@@ -27,9 +27,11 @@ const DISTANCE_COLUMN = '_distance'
 
 /** Handle LanceDB di sola lettura su una tabella dell'indice. */
 class LanceIndexTable implements IndexTable {
+  private readonly connection: lancedb.Connection
   private readonly table: lancedb.Table
 
-  constructor(table: lancedb.Table) {
+  constructor(connection: lancedb.Connection, table: lancedb.Table) {
+    this.connection = connection
     this.table = table
   }
 
@@ -53,16 +55,23 @@ class LanceIndexTable implements IndexTable {
     return rows.map((row) => splitDistance(row, params.column))
   }
 
-  async close(): Promise<void> {
+  close(): Promise<void> {
+    // `close` è sincrono e opzionale in LanceDB (le risorse native sarebbero
+    // liberate anche dal GC): lo invochiamo esplicitamente per un rilascio
+    // deterministico. La connessione va chiusa insieme alla tabella, altrimenti
+    // resterebbe aperta finché non viene raccolta.
     this.table.close()
+    this.connection.close()
+    return Promise.resolve()
   }
 }
 
 /**
  * Separa la distanza dai dati e rimuove la colonna del vettore (grande e non
- * utile a valle) dalla riga restituita.
+ * utile a valle) dalla riga restituita. Esportata per il test unitario del
+ * contratto con le righe grezze del motore.
  */
-function splitDistance(row: Record<string, unknown>, vectorColumn: string): IndexSearchRow {
+export function splitDistance(row: Record<string, unknown>, vectorColumn: string): IndexSearchRow {
   const dati: Record<string, unknown> = {}
   let distance: unknown
   for (const [key, value] of Object.entries(row)) {
@@ -72,10 +81,15 @@ function splitDistance(row: Record<string, unknown>, vectorColumn: string): Inde
       dati[key] = value
     }
   }
-  return {
-    distanza: typeof distance === 'number' ? distance : Number(distance),
-    dati
+  if (typeof distance !== 'number') {
+    // Ogni riga di una ricerca `nearestTo` porta la colonna `_distance`: la sua
+    // assenza segnala un contratto rotto col motore, non un caso da ignorare.
+    throw new IndexError(
+      `Riga dell'indice senza colonna di distanza "${DISTANCE_COLUMN}".`,
+      'MALFORMED_ROW'
+    )
   }
+  return { distanza: distance, dati }
 }
 
 /**
@@ -89,6 +103,7 @@ export function createLanceConnector(): IndexConnector {
 
       const names = await db.tableNames()
       if (!names.includes(tableName)) {
+        db.close()
         throw new IndexError(
           `Tabella "${tableName}" non trovata nell'indice ${indexDir}.`,
           'TABLE_NOT_FOUND'
@@ -96,7 +111,7 @@ export function createLanceConnector(): IndexConnector {
       }
 
       const table = await db.openTable(tableName)
-      return new LanceIndexTable(table)
+      return new LanceIndexTable(db, table)
     }
   }
 }

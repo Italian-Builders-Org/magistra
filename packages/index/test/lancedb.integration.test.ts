@@ -174,6 +174,18 @@ test('la query senza filtro cerca su tutto il corpus', async (t) => {
   }
 })
 
+test('dopo close le risorse del motore sono rilasciate', async (t) => {
+  const indexDir = await buildIndex(t)
+  if (!indexDir) return
+
+  const index = await openLanceNormativeIndex(indexDir, { expectedEmbedder: EMBEDDER })
+  await index.close()
+
+  // LanceDB rifiuta ogni uso di tabella/connessione dopo la chiusura: se `close`
+  // avesse dimenticato di rilasciarle, questa query passerebbe.
+  await assert.rejects(index.countChunks())
+})
+
 test('rifiuta un indice il cui manifest dichiara un embedder incompatibile', async (t) => {
   const indexDir = await buildIndex(t)
   if (!indexDir) return

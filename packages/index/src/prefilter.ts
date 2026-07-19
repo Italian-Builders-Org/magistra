@@ -37,8 +37,8 @@ function toList(value: string | readonly string[]): string[] {
   return Array.isArray(value) ? [...value] : [value as string]
 }
 
-function inClause(column: string, values: readonly string[]): string | null {
-  const list = toList(values)
+function inClause(column: string, value: string | readonly string[]): string | null {
+  const list = toList(value)
   if (list.length === 0) {
     return null
   }
@@ -65,20 +65,24 @@ export function buildPrefilter(filter: NormativeQueryFilter): string | null {
         'INVALID_FILTER'
       )
     }
+    // `vigenza_da`/`vigenza_a` sono conservate come stringhe ISO `YYYY-MM-DD`:
+    // il confronto `<=`/`>=` è lessicografico, che per questo formato coincide
+    // con l'ordine cronologico. L'invariante regge finché l'ingest scrive date
+    // in questo formato (validato in ingresso da `ISO_DATE`).
     const date = quote(filter.vigenteAl)
     clauses.push(`vigenza_da <= ${date}`)
     clauses.push(`(vigenza_a IS NULL OR vigenza_a >= ${date})`)
   }
 
   if (filter.tipoAtto !== undefined) {
-    const clause = inClause('tipo_atto', toList(filter.tipoAtto))
+    const clause = inClause('tipo_atto', filter.tipoAtto)
     if (clause) {
       clauses.push(clause)
     }
   }
 
   if (filter.fonte !== undefined) {
-    const clause = inClause('fonte', toList(filter.fonte))
+    const clause = inClause('fonte', filter.fonte)
     if (clause) {
       clauses.push(clause)
     }

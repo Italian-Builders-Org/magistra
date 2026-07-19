@@ -14,6 +14,7 @@ export type IndexErrorCode =
   | 'TABLE_NOT_FOUND'
   | 'INVALID_FILTER'
   | 'INVALID_QUERY_VECTOR'
+  | 'MALFORMED_ROW'
 
 export class IndexError extends Error {
   public readonly code: IndexErrorCode
