@@ -5,6 +5,9 @@
 // l'handler non e riuscito a trattare insieme al loro input grezzo, cosi il
 // problema resta ispezionabile invece di sparire in un log.
 
+import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
+
 /** Esito registrato per un item gia elaborato. */
 export type ItemEsitoRegistrato = 'ok' | 'parziale' | 'quarantena'
 
@@ -61,4 +64,75 @@ export class InMemoryJobStore implements JobStore {
 
     return Promise.resolve()
   }
+}
+
+/**
+ * Store su filesystem.
+ *
+ * Il checkpoint si scrive su file temporaneo e poi si rinomina: `rename` sullo
+ * stesso filesystem e atomico, quindi un processo ucciso a meta scrittura
+ * lascia intatto il checkpoint precedente invece di produrne uno troncato.
+ */
+export class FileJobStore implements JobStore {
+  private readonly rootDir: string
+
+  constructor(rootDir: string) {
+    this.rootDir = rootDir
+  }
+
+  async loadCheckpoint(jobId: string): Promise<JobCheckpoint | null> {
+    try {
+      const grezzo = await readFile(this.checkpointPath(jobId), 'utf8')
+
+      return JSON.parse(grezzo) as JobCheckpoint
+    } catch (error) {
+      if (isErrnoCode(error, 'ENOENT')) {
+        return null
+      }
+
+      throw error
+    }
+  }
+
+  async saveCheckpoint(checkpoint: JobCheckpoint): Promise<void> {
+    const percorso = this.checkpointPath(checkpoint.jobId)
+    const temporaneo = `${percorso}.tmp`
+
+    await mkdir(dirname(percorso), { recursive: true })
+    await writeFile(temporaneo, JSON.stringify(checkpoint, null, 2), 'utf8')
+    await rename(temporaneo, percorso)
+  }
+
+  async quarantine(jobId: string, entry: QuarantineEntry): Promise<void> {
+    const cartella = join(this.rootDir, jobId, 'quarantena')
+    // L'id di un item puo contenere separatori di percorso (un ELI, un path):
+    // codificarlo lo rende un nome di file sicuro e comunque reversibile.
+    const base = encodeURIComponent(entry.itemId)
+
+    await mkdir(cartella, { recursive: true })
+    await writeFile(join(cartella, `${base}.input`), serializzaInput(entry.rawInput), 'utf8')
+    await writeFile(
+      join(cartella, `${base}.errore.json`),
+      JSON.stringify({ itemId: entry.itemId, motivo: entry.motivo }, null, 2),
+      'utf8'
+    )
+  }
+
+  private checkpointPath(jobId: string): string {
+    return join(this.rootDir, jobId, 'checkpoint.json')
+  }
+}
+
+/** Un input testuale si conserva com'e; il resto passa per JSON. */
+function serializzaInput(rawInput: unknown): string {
+  return typeof rawInput === 'string' ? rawInput : JSON.stringify(rawInput, null, 2)
+}
+
+function isErrnoCode(error: unknown, code: string): boolean {
+  return Boolean(
+    error &&
+    typeof error === 'object' &&
+    'code' in error &&
+    (error as NodeJS.ErrnoException).code === code
+  )
 }
