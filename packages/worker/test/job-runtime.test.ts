@@ -2,13 +2,10 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 import { JobError, runJob, type JobHandler, type JobItem } from '../src/job-runtime.ts'
-import { InMemoryJobSink } from '../src/job-sink.ts'
-import { InMemoryJobStore } from '../src/job-store.ts'
+import { InMemoryJobSink, type JobSink } from '../src/job-sink.ts'
+import { InMemoryJobStore, type JobStore } from '../src/job-store.ts'
 
 import type { JobProgress } from '@magistra/shared'
-
-import type { JobSink } from '../src/job-sink.ts'
-import type { JobStore } from '../src/job-store.ts'
 
 /** Item finti: quelli il cui input contiene «rotto» fanno esplodere l'handler. */
 function itemFixture(ids: readonly string[]): JobItem<string>[] {
@@ -280,6 +277,55 @@ test('una quarantena che fallisce interrompe il job', async () => {
       return true
     }
   )
+})
+
+test('un checkpoint illeggibile interrompe il job prima di elaborare gli item', async () => {
+  const storeRotto: JobStore = {
+    loadCheckpoint() {
+      return Promise.reject(new SyntaxError('JSON non valido'))
+    },
+    saveCheckpoint() {
+      return Promise.resolve()
+    },
+    quarantine() {
+      return Promise.resolve()
+    }
+  }
+
+  await assert.rejects(
+    runJob({ jobId: 'j1', tipo: 'fixture', items: itemFixture(['a']) }, handlerFixture, {
+      store: storeRotto,
+      sink: new InMemoryJobSink<string>()
+    }),
+    (error: unknown) => {
+      assert.ok(error instanceof JobError)
+      assert.equal(error.code, 'CHECKPOINT_FALLITO')
+
+      return true
+    }
+  )
+})
+
+test('la ripresa conserva il conteggio dei parziali dal checkpoint', async () => {
+  const store = new InMemoryJobStore()
+  const tutti = itemFixture(['a-scarno', 'b'])
+
+  await runJob({ jobId: 'j1', tipo: 'fixture', items: tutti.slice(0, 1) }, handlerFixture, {
+    store,
+    sink: new InMemoryJobSink<string>()
+  })
+
+  const summary = await runJob(
+    { jobId: 'j1', tipo: 'fixture', items: tutti, totale: tutti.length },
+    handlerFixture,
+    { store, sink: new InMemoryJobSink<string>() }
+  )
+
+  assert.equal(summary.parziali, 1)
+  assert.equal(summary.ok, 1)
+  assert.equal(summary.inQuarantena, 0)
+  assert.equal(summary.elaborati, 2)
+  assert.equal(summary.stato, 'completato')
 })
 
 test('l avanzamento viene emesso dopo ogni item e i conteggi tornano', async () => {

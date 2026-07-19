@@ -122,6 +122,20 @@ test('FileJobStore serializza in JSON un input grezzo non testuale', async () =>
   assert.deepEqual(JSON.parse(grezzo), { eli: 'urn:lex:it:stato:legge:2020', articoli: 3 })
 })
 
+test('FileJobStore non lascia che un jobId con separatori scriva fuori dalla radice', async () => {
+  const contenitore = await mkdtemp(join(tmpdir(), 'magistra-job-store-'))
+  const root = join(contenitore, 'radice')
+  const store = new FileJobStore(root)
+  const jobId = '../../fuga'
+
+  await store.saveCheckpoint({ jobId, tipo: 'fixture', esiti: { a: 'ok' } })
+
+  // Il checkpoint resta leggibile con lo stesso id, ma il file e dentro root.
+  assert.deepEqual((await store.loadCheckpoint(jobId))?.esiti, { a: 'ok' })
+  assert.deepEqual(await readdir(root), [encodeURIComponent(jobId)])
+  assert.deepEqual(await readdir(contenitore), ['radice'])
+})
+
 test('FileJobStore non tocca il checkpoint buono se la scrittura temporanea fallisce', async () => {
   const root = await mkdtemp(join(tmpdir(), 'magistra-job-store-'))
   const store = new FileJobStore(root)

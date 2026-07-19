@@ -8,7 +8,15 @@
 
 /** Destinazione dei risultati prodotti da un job. */
 export interface JobSink<TOutput> {
-  /** Scrive il risultato di un item. Un errore qui e un guasto d'infrastruttura. */
+  /**
+   * Scrive il risultato di un item. Un errore qui e un guasto d'infrastruttura.
+   *
+   * L'implementazione deve essere idempotente per `itemId`, cioe avere
+   * semantica di upsert: il runtime scrive sul sink prima di salvare il
+   * checkpoint, quindi un job interrotto tra le due operazioni riscrive quello
+   * stesso item alla ripresa. La consegna e «almeno una volta», e deduplicare
+   * spetta alla destinazione.
+   */
   write(itemId: string, output: TOutput): Promise<void>
 }
 

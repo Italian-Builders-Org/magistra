@@ -243,7 +243,8 @@ export type JobDescriptorMeta = z.infer<typeof jobDescriptorMetaSchema>
 
 /**
  * Conteggi di un job. `elaborati` e la somma degli altri tre: e ridondante per
- * comodita di chi mostra un avanzamento, e l'invariante e verificata dai test.
+ * comodita di chi mostra un avanzamento, e l'invariante e verificata dai test
+ * del worker.
  * `totale` e noto solo quando la sorgente degli item e finita; su una sorgente
  * in streaming resta `null`, che e piu onesto di un totale inventato.
  */

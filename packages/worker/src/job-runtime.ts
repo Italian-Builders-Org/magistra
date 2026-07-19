@@ -1,7 +1,7 @@
 import type { JobProgress, JobSummary } from '@magistra/shared'
 
 import type { JobSink } from './job-sink.js'
-import type { ItemEsitoRegistrato, JobStore } from './job-store.js'
+import type { ItemEsitoRegistrato, JobCheckpoint, JobStore } from './job-store.js'
 
 // Runtime dei job batch.
 //
@@ -75,6 +75,11 @@ export interface RunJobOptions<TOutput> {
  * ogni handler, instradando in quarantena chi lancia; salva il checkpoint ed
  * emette l'avanzamento dopo ogni item.
  *
+ * La scrittura sul sink precede il salvataggio del checkpoint: un job ucciso
+ * tra le due riscrive quell'item alla ripresa, quindi il sink deve essere
+ * idempotente per `itemId` (semantica di upsert). E la scelta deliberata: mai
+ * perdere un risultato, al prezzo di poterlo riscrivere.
+ *
  * @throws {JobError} se store o sink falliscono: e un guasto d'infrastruttura,
  *   e proseguire non avrebbe senso perche ogni item successivo lo incontrerebbe
  *   di nuovo. Il checkpoint gia scritto permette comunque la ripresa.
@@ -88,7 +93,19 @@ export async function runJob<TInput, TOutput>(
   const { jobId, tipo } = descriptor
   const totale = descriptor.totale ?? null
 
-  const precedente = await store.loadCheckpoint(jobId)
+  let precedente: JobCheckpoint | null
+  try {
+    precedente = await store.loadCheckpoint(jobId)
+  } catch (error) {
+    throw new JobError(
+      `Lettura del checkpoint fallita per il job ${jobId}.`,
+      'CHECKPOINT_FALLITO',
+      {
+        cause: error
+      }
+    )
+  }
+
   const esiti: Record<string, ItemEsitoRegistrato> = { ...(precedente?.esiti ?? {}) }
 
   let ok = 0
@@ -110,18 +127,20 @@ export async function runJob<TInput, TOutput>(
       continue
     }
 
-    let outcome: ItemOutcome<TOutput> | null = null
-    let causa: unknown = null
+    let esitoItem: ItemOutcome<TOutput> | undefined
+    let causa: unknown
+    let fallito = false
 
     try {
-      outcome = await handler(item)
+      esitoItem = await handler(item)
     } catch (error) {
       causa = error
+      fallito = true
     }
 
-    if (outcome) {
+    if (!fallito && esitoItem !== undefined) {
       try {
-        await sink.write(item.id, outcome.output)
+        await sink.write(item.id, esitoItem.output)
       } catch (error) {
         throw new JobError(
           `Scrittura del risultato fallita per l'item ${item.id}.`,
@@ -130,24 +149,31 @@ export async function runJob<TInput, TOutput>(
         )
       }
 
-      esiti[item.id] = outcome.esito
+      esiti[item.id] = esitoItem.esito
 
-      if (outcome.esito === 'ok') {
+      if (esitoItem.esito === 'ok') {
         ok += 1
       } else {
         parziali += 1
       }
     } else {
+      // Il motivo della quarantena esiste per essere letto da chi indaga: se
+      // l'handler non ha lanciato ma non ha nemmeno prodotto un esito, dirlo e
+      // meglio che registrare un messaggio vuoto.
+      const motivo = fallito ? messaggioDi(causa) : "L'handler non ha restituito alcun esito."
+
       try {
         await store.quarantine(jobId, {
           itemId: item.id,
           rawInput: item.input,
-          motivo: messaggioDi(causa)
+          motivo
         })
       } catch (error) {
-        throw new JobError(`Quarantena fallita per l'item ${item.id}.`, 'QUARANTENA_FALLITA', {
-          cause: error
-        })
+        throw new JobError(
+          `Quarantena fallita per l'item ${item.id} (causa originale: ${motivo}).`,
+          'QUARANTENA_FALLITA',
+          { cause: error }
+        )
       }
 
       esiti[item.id] = 'quarantena'
@@ -188,5 +214,11 @@ export async function runJob<TInput, TOutput>(
 }
 
 function messaggioDi(causa: unknown): string {
-  return causa instanceof Error ? causa.message : String(causa)
+  if (causa instanceof Error) {
+    return causa.message
+  }
+
+  // `String(null)` da «null», che non dice nulla a chi legge la quarantena:
+  // meglio conservare anche il tipo di cio che l'handler ha lanciato.
+  return `valore non-Error lanciato dall'handler: ${typeof causa} ${String(causa)}`
 }

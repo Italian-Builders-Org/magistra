@@ -104,7 +104,7 @@ export class FileJobStore implements JobStore {
   }
 
   async quarantine(jobId: string, entry: QuarantineEntry): Promise<void> {
-    const cartella = join(this.rootDir, jobId, 'quarantena')
+    const cartella = join(this.jobDir(jobId), 'quarantena')
     // L'id di un item puo contenere separatori di percorso (un ELI, un path):
     // codificarlo lo rende un nome di file sicuro e comunque reversibile.
     const base = encodeURIComponent(entry.itemId)
@@ -119,7 +119,13 @@ export class FileJobStore implements JobStore {
   }
 
   private checkpointPath(jobId: string): string {
-    return join(this.rootDir, jobId, 'checkpoint.json')
+    return join(this.jobDir(jobId), 'checkpoint.json')
+  }
+
+  private jobDir(jobId: string): string {
+    // Anche il jobId diventa un segmento di percorso: codificarlo impedisce che
+    // un id contenente separatori scriva fuori dalla cartella radice.
+    return join(this.rootDir, encodeURIComponent(jobId))
   }
 }
 
