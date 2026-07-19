@@ -31,6 +31,7 @@
     "test:core": "npm run test -w packages/core",
     "test:worker": "npm run test -w packages/worker",
     "test:index": "npm run test -w packages/index",
+    "test:data": "npm run test -w packages/data",
     "test:security": "npm run test:security -w apps/desktop",
     "test:strict": "node scripts/validate-knowledge-base.mjs --strict",
     "validate:kb": "node scripts/validate-knowledge-base.mjs",
