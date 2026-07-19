@@ -162,7 +162,7 @@ export interface GenerationResult {
 /**
  * Risultato di una generazione in streaming.
  * `textStream` emette i delta di testo token-per-token, così il backend può
- * inoltrarli alla UI man mano che arrivano; le promesse si risolvono al termine
+ * inoltrarli alla UI man mano che arrivano; le Promise si risolvono al termine
  * dello stream con il testo completo e i metadati.
  */
 export interface GenerationStream {

@@ -18,7 +18,7 @@ interface StreamScript {
   usage?: { inputTokens?: number; outputTokens?: number; totalTokens?: number }
   /** Errore sollevato durante l'iterazione dello stream di testo. */
   streamError?: Error
-  /** Errore con cui si risolve la promessa del testo completo. */
+  /** Errore con cui si risolve la Promise del testo completo. */
   textError?: Error
 }
 
@@ -235,6 +235,80 @@ test('un errore sul testo completo diventa ProviderError PROVIDER_UNAVAILABLE', 
     () => result.text,
     (error: unknown) => error instanceof ProviderError && error.code === 'PROVIDER_UNAVAILABLE'
   )
+})
+
+test('un guasto immediato di streamText emerge via stream e Promise, non in modo sincrono', async () => {
+  const engine: LlmEngine = {
+    streamText() {
+      throw new Error('modello malformato')
+    },
+    async embed() {
+      return { embedding: [] }
+    },
+    async embedMany() {
+      return { embeddings: [] }
+    }
+  }
+  const provider = createProvider(OPENAI_LOCAL, { engine })
+
+  // `stream()` non deve lanciare in modo sincrono: l'errore viaggia nelle Promise.
+  const result = provider.requireLanguage().stream({ messages: [{ role: 'user', content: 'x' }] })
+
+  await assert.rejects(
+    () => collect(result.textStream),
+    (error: unknown) => error instanceof ProviderError && error.code === 'PROVIDER_UNAVAILABLE'
+  )
+  await assert.rejects(
+    () => result.text,
+    (error: unknown) => error instanceof ProviderError && error.code === 'PROVIDER_UNAVAILABLE'
+  )
+})
+
+test('un guasto del provider non produce unhandledRejection se il consumer legge solo il testo', async () => {
+  const boom = new Error('endpoint spento')
+  const engine: LlmEngine = {
+    streamText(): LlmStreamHandle {
+      async function* iterate(): AsyncGenerator<string> {
+        yield 'par'
+        throw boom
+      }
+      return {
+        textStream: iterate(),
+        text: Promise.reject(boom),
+        toolCalls: Promise.reject(boom),
+        finishReason: Promise.reject(boom),
+        usage: Promise.reject(boom)
+      }
+    },
+    async embed() {
+      return { embedding: [] }
+    },
+    async embedMany() {
+      return { embeddings: [] }
+    }
+  }
+
+  const captured: unknown[] = []
+  const onUnhandled = (reason: unknown): void => {
+    captured.push(reason)
+  }
+  process.on('unhandledRejection', onUnhandled)
+  try {
+    const provider = createProvider(OPENAI_LOCAL, { engine })
+    const result = provider.requireLanguage().stream({ messages: [{ role: 'user', content: 'x' }] })
+
+    // Consumer realistico: consuma i token e legge il testo, ignora usage/toolCalls/finishReason.
+    await assert.rejects(() => collect(result.textStream))
+    await assert.rejects(() => result.text)
+
+    // Lascia sfogare eventuali rigetti pendenti prima di verificare.
+    await new Promise((resolve) => setImmediate(resolve))
+    await new Promise((resolve) => setImmediate(resolve))
+  } finally {
+    process.off('unhandledRejection', onUnhandled)
+  }
+
+  assert.deepEqual(captured, [], 'nessuna Promise non attesa deve rigettare senza handler')
 })
 
 // === Embedding ===============================================================

@@ -95,7 +95,7 @@ export interface LanguageCapability {
    * Genera in streaming, esponendo i token man mano che arrivano.
    * Gli errori del provider (endpoint spento, credenziali rifiutate, timeout)
    * emergono come `ProviderError` con codice `PROVIDER_UNAVAILABLE`, sia durante
-   * l'iterazione di `textStream` sia risolvendo le promesse: nessuna risposta
+   * l'iterazione di `textStream` sia risolvendo le Promise: nessuna risposta
    * inventata, nessun ripiego su un altro provider.
    */
   stream(request: GenerationRequest): GenerationStream
@@ -115,7 +115,7 @@ function toToolCall(call: RawToolCall): GenerationToolCall {
   return { toolCallId: call.toolCallId, toolName: call.toolName, input: call.input }
 }
 
-/** Avvolge una promessa dell'SDK, traducendo un guasto in `ProviderError`. */
+/** Avvolge una Promise dell'SDK, traducendo un guasto in `ProviderError`. */
 async function guard<T>(context: string, run: () => PromiseLike<T>): Promise<T> {
   try {
     return await run()
@@ -156,12 +156,31 @@ export function buildLanguageCapability(
   }
 
   function stream(request: GenerationRequest): GenerationStream {
-    const handle = open(request)
     const context = `Generazione con il modello «${modelId}» non riuscita`
 
+    // Apri lo stream una sola volta, in modo pigro e memoizzato: un guasto
+    // immediato di `streamText` non viene lanciato in modo sincrono da
+    // `stream()`, ma veicolato attraverso `textStream` e le Promise, come da
+    // contratto della capacità. `open()` traduce già il guasto in ProviderError.
+    let handle: LlmStreamHandle | undefined
+    let openError: ProviderError | undefined
+    function ensureHandle(): LlmStreamHandle {
+      if (openError) throw openError
+      if (!handle) {
+        try {
+          handle = open(request)
+        } catch (cause) {
+          openError = cause instanceof ProviderError ? cause : asProviderUnavailable(context, cause)
+          throw openError
+        }
+      }
+      return handle
+    }
+
     async function* iterate(): AsyncGenerator<string> {
+      const active = ensureHandle()
       try {
-        for await (const delta of handle.textStream) {
+        for await (const delta of active.textStream) {
           yield delta
         }
       } catch (cause) {
@@ -170,13 +189,24 @@ export function buildLanguageCapability(
       }
     }
 
-    return {
-      textStream: iterate(),
-      text: guard(context, () => handle.text),
-      toolCalls: guard(context, () => handle.toolCalls).then((calls) => calls.map(toToolCall)),
-      finishReason: guard(context, () => handle.finishReason),
-      usage: guard(context, () => handle.usage).then(toTokenUsage)
+    const text = guard(context, () => ensureHandle().text)
+    const toolCalls = guard(context, () => ensureHandle().toolCalls).then((calls) =>
+      calls.map(toToolCall)
+    )
+    const finishReason = guard(context, () => ensureHandle().finishReason)
+    const usage = guard(context, () => ensureHandle().usage).then(toTokenUsage)
+
+    // Rete di sicurezza: le Promise sono materializzate subito (eager), ma un
+    // consumer in streaming attende tipicamente solo `textStream` e `text`. Se
+    // il provider fallisce, le Promise non attese rigetterebbero senza handler
+    // (`unhandledRejection`, potenzialmente fatale in Electron). Il `catch`
+    // silenzioso previene questo senza cambiare il contratto: chi attende una
+    // Promise continua a vederne il rigetto.
+    for (const settled of [text, toolCalls, finishReason, usage]) {
+      settled.catch(() => {})
     }
+
+    return { textStream: iterate(), text, toolCalls, finishReason, usage }
   }
 
   async function generate(request: GenerationRequest): Promise<GenerationResult> {

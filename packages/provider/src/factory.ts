@@ -106,7 +106,9 @@ function resolveModels(config: ProviderConfig): {
       // Copre i runtime locali (Ollama, LM Studio, llama.cpp) e i gateway
       // remoti: stessa API, raggiunta via `base_url` con chiave opzionale.
       const provider = createOpenAICompatible({
-        name: config.name ?? 'openai-compatible',
+        // Stessa etichetta usata dal descrittore/UI, così il nome con cui l'SDK
+        // marca le richieste e quello mostrato all'utente non divergono.
+        name: describeLabel(config),
         baseURL: config.baseUrl,
         apiKey: config.apiKey,
         headers: config.headers

@@ -46,13 +46,6 @@ function remoteConfig(): ProviderConfig | null {
   return null
 }
 
-async function firstToken(stream: AsyncIterable<string>): Promise<string> {
-  for await (const delta of stream) {
-    if (delta.length > 0) return delta
-  }
-  return ''
-}
-
 const local = localConfig()
 const remote = remoteConfig()
 
@@ -94,6 +87,9 @@ test('generazione in streaming contro un provider remoto', { skip: !remote }, as
     maxOutputTokens: 32
   })
 
-  assert.ok((await firstToken(result.textStream)).length >= 0)
+  const tokens: string[] = []
+  for await (const delta of result.textStream) tokens.push(delta)
+
+  assert.ok(tokens.length > 0, 'lo stream deve emettere almeno un token')
   assert.ok((await result.text).length > 0)
 })
