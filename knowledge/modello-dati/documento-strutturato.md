@@ -95,6 +95,9 @@ Una trasformazione assistita da LLM è un artefatto distinto e mantiene riferime
 
 ## Chunk AI-ready
 
+Questi [chunk](../glossario/chunk.md) derivano dai documenti dell'utente e sono distinti dal [Chunk del corpus normativo](./chunk.md), che è indicizzato per unità con metadati di citazione ELI.
+Qui non esistono `unita_id` né `metadati_citazione`: la provenienza è verso i blocchi del Document AST e le pagine del file originale.
+
 I chunk vengono costruiti dal Document AST e non direttamente dal testo appiattito.
 Ogni chunk contiene almeno:
 
@@ -114,5 +117,5 @@ Il chunking rispetta sezioni, paragrafi, punti elenco e tabelle, non taglia fras
 - Il file originale e l'estrazione fedele non vengono sovrascritti.
 - Ogni blocco e chunk mantiene una provenienza verificabile.
 - Le tabelle restano strutturate e non vengono appiattite in una sequenza ambigua.
-- Le pagine prive di testo utilizzabile vengono riconosciute e indirizzate al flusso OCR.
+- Le pagine prive di testo utilizzabile vengono riconosciute e indirizzate all'estrazione OCR selettiva per pagina.
 - Gli artefatti derivati sono rigenerabili dalla stessa versione del file originale e dal medesimo contratto di estrazione.

@@ -39,7 +39,7 @@ Mappa invece le informazioni disponibili nel [Documento strutturato](../modello-
 - **Estrazione fedele** da PDF e formati Office, conservando titoli, paragrafi, elenchi, tabelle, note, pagine e ordine di lettura quando disponibili.
 - **Conversione di formato** (DOC/DOCX ↔ PDF) per la visualizzazione e per l'esportazione delle bozze redatte.
 - **Normalizzazione deterministica** di Unicode, spazi, ritorni a capo artificiali, sillabazioni e intestazioni o piè di pagina ripetuti, senza riscrivere il contenuto.
-- **Riconoscimento in fase di estrazione dei PDF scansionati o misti** e invio al flusso OCR delle sole pagine prive di un livello testuale utilizzabile.
+- **Riconoscimento in fase di estrazione dei PDF scansionati o misti** e invio all'estrazione OCR delle sole pagine prive di un livello testuale utilizzabile.
 - **Produzione degli artefatti strutturati** Markdown, JSON e chunk, tutti riconducibili al file originale.
 - Output formattato per casi particolari, compreso l'orientamento orizzontale per checklist e tabelle.
 
