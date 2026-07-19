@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdtemp, readFile, readdir, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, readdir, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
@@ -120,4 +120,20 @@ test('FileJobStore serializza in JSON un input grezzo non testuale', async () =>
   const grezzo = await readFile(join(root, 'j1', 'quarantena', 'oggetto.input'), 'utf8')
 
   assert.deepEqual(JSON.parse(grezzo), { eli: 'urn:lex:it:stato:legge:2020', articoli: 3 })
+})
+
+test('FileJobStore non tocca il checkpoint buono se la scrittura temporanea fallisce', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'magistra-job-store-'))
+  const store = new FileJobStore(root)
+
+  await store.saveCheckpoint({ jobId: 'j1', tipo: 'fixture', esiti: { a: 'ok' } })
+  // Occupa il percorso temporaneo con una cartella: la scrittura del file
+  // temporaneo fallira, e il checkpoint precedente deve restare intatto.
+  await mkdir(join(root, 'j1', 'checkpoint.json.tmp'), { recursive: true })
+
+  await assert.rejects(
+    store.saveCheckpoint({ jobId: 'j1', tipo: 'fixture', esiti: { a: 'ok', b: 'ok' } })
+  )
+
+  assert.deepEqual((await store.loadCheckpoint('j1'))?.esiti, { a: 'ok' })
 })
