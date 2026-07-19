@@ -39,12 +39,12 @@ Per ogni versione elaborata del documento la pipeline conserva:
 | File originale | Fonte immutata e riferimento ultimo per la verifica |
 | `document.md` | Vista fedele e leggibile, con struttura, tabelle e marcatori di pagina |
 | `document.json` | Document AST completo, con metadati, blocchi, ordine e provenienza |
-| `chunks.jsonl` | Segmenti AI-ready derivati dai blocchi strutturati |
+| `chunks.jsonl` | Segmenti pronti per l'AI, derivati dai blocchi strutturati |
 | `assets/` | Immagini e altri asset estratti, quando presenti |
 
 ## Document AST
 
-Il Document AST descrive il documento come sequenza ordinata di blocchi.
+Il Document AST (rappresentazione ad albero della struttura del documento) descrive il documento come sequenza ordinata di blocchi.
 Ogni blocco contiene almeno:
 
 | Campo | Descrizione |
@@ -93,7 +93,7 @@ La normalizzazione è deterministica e può:
 La normalizzazione non riassume, interpreta o riscrive il testo.
 Una trasformazione assistita da LLM è un artefatto distinto e mantiene riferimenti ai blocchi da cui deriva.
 
-## Chunk AI-ready
+## Chunk pronti per l'AI
 
 Questi [chunk](../glossario/chunk.md) derivano dai documenti dell'utente e sono distinti dal [Chunk del corpus normativo](./chunk.md), che è indicizzato per unità con metadati di citazione ELI.
 Qui non esistono `unita_id` né `metadati_citazione`: la provenienza è verso i blocchi del Document AST e le pagine del file originale.

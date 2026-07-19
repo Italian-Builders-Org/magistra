@@ -46,7 +46,7 @@ Distinte dal corpus pubblico: rappresentano il lavoro dell'utente sui documenti 
 - [Modello dati applicativo](./modello-applicativo.md) — panoramica e relazioni.
 - [Progetto](./progetto.md)
 - [Documento](./documento.md) (file dell'utente)
-- [Documento strutturato](./documento-strutturato.md) (Document AST e artefatti AI-ready)
+- [Documento strutturato](./documento-strutturato.md) (Document AST e artefatti pronti per l'AI)
 - [Conversazione](./conversazione.md)
 - [Messaggio](./messaggio.md)
 - [Chiave API](./chiave-api.md)

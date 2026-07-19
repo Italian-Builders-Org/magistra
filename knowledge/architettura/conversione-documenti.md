@@ -23,7 +23,7 @@ flowchart LR
     D --> E["Normalizzazione<br/>strutturale"]
     E --> F["Document AST"]
     F --> G["Markdown + JSON"]
-    F --> H["Chunk AI-ready"]
+    F --> H["Chunk per l'AI"]
 ```
 
 ## Confine tra estrazione e normalizzazione
@@ -32,7 +32,7 @@ Il rilevamento del formato, la conversione e l'estrazione fedele costituiscono i
 Questo livello espone testo, pagine, blocchi e tutte le informazioni strutturali disponibili nella fonte, senza ridurre il risultato a una sola stringa quando il formato permette una rappresentazione più ricca.
 
 La normalizzazione strutturale utilizza quel risultato come input: non converte nuovamente il file e non reimplementa gli estrattori.
-Mappa invece le informazioni disponibili nel [Documento strutturato](../modello-dati/documento-strutturato.md), applica regole deterministiche e genera gli artefatti AI-ready destinati all'analisi.
+Mappa invece le informazioni disponibili nel [Documento strutturato](../modello-dati/documento-strutturato.md), applica regole deterministiche e genera gli artefatti pronti per l'AI destinati all'analisi.
 
 ## Responsabilità
 

@@ -22,4 +22,4 @@ Ogni versione di un [Documento](../modello-dati/documento.md) mantiene separati:
 - gli asset estratti e gli eventuali formati convertiti.
 
 Gli artefatti derivati sono rigenerabili e non sovrascrivono l'originale.
-L'interfaccia di storage li recupera per documento e versione, così l'[analisi documentale](../funzionalita/analisi-documenti.md) può consumare la rappresentazione AI-ready senza invocare direttamente convertitori o estrattori.
+L'interfaccia di storage li recupera per documento e versione, così l'[analisi documentale](../funzionalita/analisi-documenti.md) può consumare la rappresentazione pronta per l'AI senza invocare direttamente convertitori o estrattori.
