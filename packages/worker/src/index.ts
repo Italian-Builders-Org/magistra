@@ -1,6 +1,9 @@
 import type { AppInfo } from '@magistra/shared'
 
 export * from './document-conversion.js'
+export * from './job-runtime.js'
+export * from './job-sink.js'
+export * from './job-store.js'
 
 // Worker di ingest.
 //
