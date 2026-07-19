@@ -43,3 +43,8 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Smoke packaging desktop
+        run: npm run package:desktop:dir:from-build
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
