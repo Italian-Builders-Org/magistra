@@ -59,7 +59,9 @@ CREATE TABLE messaggio (
   UNIQUE (conversazione_id, ordine)
 );
 
-CREATE INDEX idx_messaggio_conversazione ON messaggio (conversazione_id);
+-- Il vincolo UNIQUE (conversazione_id, ordine) fornisce gia un indice con
+-- conversazione_id come colonna di testa: serve sia il filtro per conversazione
+-- sia l'ORDER BY ordine, quindi non serve un indice separato su conversazione_id.
 
 CREATE TABLE chiave_api (
   id             TEXT PRIMARY KEY,

@@ -1,3 +1,5 @@
+import { z } from 'zod'
+
 import type { SqlDriver, SqlExecutor } from './driver.ts'
 import { DataError } from './errors.ts'
 import {
@@ -109,6 +111,21 @@ function translateWriteError(cause: unknown): never {
     }
   }
   throw cause
+}
+
+/**
+ * Valida l'input di un'operazione con uno schema Zod, traducendo il fallimento
+ * in `DataError` `INVALID_INPUT`. Cosi ai confini dello strato dati l'input non
+ * valido e la violazione di vincolo condividono lo stesso tipo d'errore con
+ * `code` stabile, senza far trapelare il `ZodError` del validatore.
+ */
+function parseInput<T>(schema: z.ZodType<T>, input: unknown): T {
+  const esito = schema.safeParse(input)
+  if (esito.success) return esito.data
+  const dettaglio = esito.error.issues
+    .map((i) => `${i.path.join('.') || '(radice)'}: ${i.message}`)
+    .join('; ')
+  throw new DataError(`Input non valido: ${dettaglio}.`, 'INVALID_INPUT', { cause: esito.error })
 }
 
 function malformed(column: string, value: unknown): never {
@@ -268,7 +285,7 @@ class ProgettoRepositoryImpl implements ProgettoRepository {
   }
 
   async create(input: NuovoProgetto): Promise<Progetto> {
-    const { nome } = nuovoProgettoSchema.parse(input)
+    const { nome } = parseInput(nuovoProgettoSchema, input)
     const id = this.generateId()
     try {
       const { rows } = await this.driver.query<Row>(
@@ -294,7 +311,7 @@ class ProgettoRepositoryImpl implements ProgettoRepository {
   }
 
   async update(id: string, patch: PatchProgetto): Promise<Progetto | null> {
-    const { nome } = patchProgettoSchema.parse(patch)
+    const { nome } = parseInput(patchProgettoSchema, patch)
     const set = buildSet([['nome', nome]], 2)
     if (!set) return this.get(id)
     try {
@@ -323,7 +340,7 @@ class DocumentoRepositoryImpl implements DocumentoRepository {
   }
 
   async create(input: NuovoDocumento): Promise<Documento> {
-    const dati = nuovoDocumentoSchema.parse(input)
+    const dati = parseInput(nuovoDocumentoSchema, input)
     const id = this.generateId()
     try {
       const { rows } = await this.driver.query<Row>(
@@ -358,7 +375,7 @@ class DocumentoRepositoryImpl implements DocumentoRepository {
   }
 
   async update(id: string, patch: PatchDocumento): Promise<Documento | null> {
-    const dati = patchDocumentoSchema.parse(patch)
+    const dati = parseInput(patchDocumentoSchema, patch)
     const set = buildSet(
       [
         ['nome', dati.nome],
@@ -399,7 +416,7 @@ class ConversazioneRepositoryImpl implements ConversazioneRepository {
   }
 
   async create(input: NuovaConversazione): Promise<Conversazione> {
-    const dati = nuovaConversazioneSchema.parse(input)
+    const dati = parseInput(nuovaConversazioneSchema, input)
     const id = this.generateId()
     try {
       const { rows } = await this.driver.query<Row>(
@@ -433,7 +450,7 @@ class ConversazioneRepositoryImpl implements ConversazioneRepository {
   }
 
   async update(id: string, patch: PatchConversazione): Promise<Conversazione | null> {
-    const dati = patchConversazioneSchema.parse(patch)
+    const dati = parseInput(patchConversazioneSchema, patch)
     const set = buildSet(
       [
         ['progetto_id', dati.progetto_id],
@@ -468,7 +485,7 @@ class MessaggioRepositoryImpl implements MessaggioRepository {
   }
 
   async create(input: NuovoMessaggio): Promise<Messaggio> {
-    const dati = nuovoMessaggioSchema.parse(input)
+    const dati = parseInput(nuovoMessaggioSchema, input)
     const id = this.generateId()
     try {
       // La posizione va calcolata e inserita atomicamente: senza transazione,
@@ -511,7 +528,7 @@ class MessaggioRepositoryImpl implements MessaggioRepository {
   }
 
   async update(id: string, patch: PatchMessaggio): Promise<Messaggio | null> {
-    const dati = patchMessaggioSchema.parse(patch)
+    const dati = parseInput(patchMessaggioSchema, patch)
     const set = buildSet(
       [
         ['contenuto', dati.contenuto],
@@ -560,7 +577,7 @@ class ChiaveApiRepositoryImpl implements ChiaveApiRepository {
   }
 
   async create(input: NuovaChiaveApi): Promise<ChiaveApi> {
-    const dati = nuovaChiaveApiSchema.parse(input)
+    const dati = parseInput(nuovaChiaveApiSchema, input)
     const id = this.generateId()
     try {
       const { rows } = await this.driver.query<Row>(
@@ -587,7 +604,7 @@ class ChiaveApiRepositoryImpl implements ChiaveApiRepository {
   }
 
   async update(id: string, patch: PatchChiaveApi): Promise<ChiaveApi | null> {
-    const dati = patchChiaveApiSchema.parse(patch)
+    const dati = parseInput(patchChiaveApiSchema, patch)
     const set = buildSet(
       [
         ['provider', dati.provider],

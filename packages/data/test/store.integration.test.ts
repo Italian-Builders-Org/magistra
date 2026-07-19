@@ -230,3 +230,36 @@ test('CRUD della chiave API: conserva il valore cifrato e la configurazione', as
 
   await store.close()
 })
+
+test('una migrazione con DDL invalido fallisce con MIGRATION_FAILED e non lascia tracce', async () => {
+  const pg = new PGlite()
+  await pg.waitReady
+  const driver = createPgliteDriver(pg)
+  const store = createDataStore(driver, {
+    generateId: idDeterministici(),
+    migrazioni: [{ version: 1, nome: 'rotta', up: 'CREATE TABLE cosi_non_va (' }]
+  })
+
+  await assert.rejects(
+    () => store.migrate(),
+    (err: unknown) => err instanceof DataError && err.code === 'MIGRATION_FAILED'
+  )
+
+  // La transazione della migrazione ha fatto rollback: la versione non risulta
+  // applicata, quindi con un elenco valido lo schema si costruisce da capo.
+  const { rows } = await driver.query<{ n: number }>(`SELECT count(*)::int AS n FROM _migrazioni`)
+  assert.equal(rows[0]?.n, 0)
+
+  await store.close()
+})
+
+test("l'input non valido e rifiutato come INVALID_INPUT, non come ZodError grezzo", async () => {
+  const store = await nuovoStore()
+
+  await assert.rejects(
+    () => store.progetti.create({ nome: '' }),
+    (err: unknown) => err instanceof DataError && err.code === 'INVALID_INPUT'
+  )
+
+  await store.close()
+})
