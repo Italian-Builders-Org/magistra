@@ -32,8 +32,11 @@ jobs:
       - name: Valida knowledge base
         run: npm test
 
-      - name: Test worker
-        run: npm run test:worker
+      - name: Test unità
+        run: npm run test:unit
+
+      - name: Test sicurezza
+        run: npm run test:security
 
       - name: Lint
         run: npm run lint
