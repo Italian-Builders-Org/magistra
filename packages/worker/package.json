@@ -8,9 +8,15 @@
   "main": "./dist/index.js",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "test": "node --experimental-strip-types --test test/*.test.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "devDependencies": {
-    "@magistra/shared": "*"
+    "@magistra/shared": "*",
+    "jszip": "^3.10.1"
+  },
+  "dependencies": {
+    "mammoth": "^1.12.0",
+    "pdf-parse": "^2.4.5"
   }
 }
