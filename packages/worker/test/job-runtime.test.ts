@@ -1,9 +1,14 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { runJob, type JobHandler, type JobItem } from '../src/job-runtime.ts'
+import { JobError, runJob, type JobHandler, type JobItem } from '../src/job-runtime.ts'
 import { InMemoryJobSink } from '../src/job-sink.ts'
 import { InMemoryJobStore } from '../src/job-store.ts'
+
+import type { JobProgress } from '@magistra/shared'
+
+import type { JobSink } from '../src/job-sink.ts'
+import type { JobStore } from '../src/job-store.ts'
 
 /** Item finti: quelli il cui input contiene «rotto» fanno esplodere l'handler. */
 function itemFixture(ids: readonly string[]): JobItem<string>[] {
@@ -196,4 +201,113 @@ test('un item in quarantena non viene ritentato alla ripresa', async () => {
   assert.equal(store.quarantena.length, 1)
   assert.equal(summary.inQuarantena, 1)
   assert.equal(summary.stato, 'completato_con_quarantena')
+})
+
+test('un sink che fallisce interrompe il job e non mette l item in quarantena', async () => {
+  const store = new InMemoryJobStore()
+  const sinkRotto: JobSink<string> = {
+    write() {
+      return Promise.reject(new Error('disco pieno'))
+    }
+  }
+
+  await assert.rejects(
+    runJob({ jobId: 'j1', tipo: 'fixture', items: itemFixture(['a']) }, handlerFixture, {
+      store,
+      sink: sinkRotto
+    }),
+    (error: unknown) => {
+      assert.ok(error instanceof JobError)
+      assert.equal(error.code, 'SINK_FALLITO')
+
+      return true
+    }
+  )
+
+  // L'input era valido: il guasto e dell'infrastruttura, non dell'item.
+  assert.equal(store.quarantena.length, 0)
+})
+
+test('un checkpoint che fallisce interrompe il job', async () => {
+  const storeRotto: JobStore = {
+    loadCheckpoint() {
+      return Promise.resolve(null)
+    },
+    saveCheckpoint() {
+      return Promise.reject(new Error('sola lettura'))
+    },
+    quarantine() {
+      return Promise.resolve()
+    }
+  }
+
+  await assert.rejects(
+    runJob({ jobId: 'j1', tipo: 'fixture', items: itemFixture(['a']) }, handlerFixture, {
+      store: storeRotto,
+      sink: new InMemoryJobSink<string>()
+    }),
+    (error: unknown) => {
+      assert.ok(error instanceof JobError)
+      assert.equal(error.code, 'CHECKPOINT_FALLITO')
+
+      return true
+    }
+  )
+})
+
+test('una quarantena che fallisce interrompe il job', async () => {
+  const storeRotto: JobStore = {
+    loadCheckpoint() {
+      return Promise.resolve(null)
+    },
+    saveCheckpoint() {
+      return Promise.resolve()
+    },
+    quarantine() {
+      return Promise.reject(new Error('cartella non scrivibile'))
+    }
+  }
+
+  await assert.rejects(
+    runJob({ jobId: 'j1', tipo: 'fixture', items: itemFixture(['b-rotto']) }, handlerFixture, {
+      store: storeRotto,
+      sink: new InMemoryJobSink<string>()
+    }),
+    (error: unknown) => {
+      assert.ok(error instanceof JobError)
+      assert.equal(error.code, 'QUARANTENA_FALLITA')
+
+      return true
+    }
+  )
+})
+
+test('l avanzamento viene emesso dopo ogni item e i conteggi tornano', async () => {
+  const store = new InMemoryJobStore()
+  const sink = new InMemoryJobSink<string>()
+  const avanzamenti: JobProgress[] = []
+  const items = itemFixture(['a', 'b-rotto', 'c-scarno'])
+
+  await runJob({ jobId: 'j1', tipo: 'fixture', items, totale: items.length }, handlerFixture, {
+    store,
+    sink,
+    onProgress: (progress) => avanzamenti.push(progress)
+  })
+
+  assert.equal(avanzamenti.length, 3)
+  assert.deepEqual(
+    avanzamenti.map((progress) => progress.elaborati),
+    [1, 2, 3]
+  )
+
+  const ultimo = avanzamenti[2]
+  assert.equal(ultimo?.ok, 1)
+  assert.equal(ultimo?.parziali, 1)
+  assert.equal(ultimo?.inQuarantena, 1)
+  assert.equal(ultimo?.totale, 3)
+  // L'invariante dichiarata nel contratto condiviso.
+  assert.equal(
+    ultimo?.elaborati,
+    (ultimo?.ok ?? 0) + (ultimo?.parziali ?? 0) + (ultimo?.inQuarantena ?? 0)
+  )
 })
