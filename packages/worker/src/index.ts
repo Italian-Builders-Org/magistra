@@ -1,5 +1,7 @@
 import type { AppInfo } from '@magistra/shared'
 
+export * from './document-conversion.js'
+
 // Worker di ingest.
 //
 // È un processo Node separato dal backend: qui gireranno i job batch pesanti
