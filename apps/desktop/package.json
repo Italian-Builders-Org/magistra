@@ -23,6 +23,7 @@
     "typecheck": "npm run typecheck:node && npm run typecheck:web"
   },
   "dependencies": {
+    "@magistra/core": "*",
     "@magistra/shared": "*",
     "@magistra/ui": "*",
     "electron-updater": "^6.3.0",

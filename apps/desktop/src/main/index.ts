@@ -2,6 +2,9 @@ import { app, BrowserWindow, dialog, protocol, net, safeStorage, shell } from 'e
 import { join, normalize, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
+import { createCore } from '@magistra/core'
+
+import { registerCoreIpc } from './ipc'
 import { SecretVault, type LinuxSafeStorageWarning } from './security/secret-vault'
 
 // In sviluppo electron-vite espone l'URL del dev server (con HMR) in questa
@@ -98,6 +101,10 @@ function showLinuxSafeStorageWarning(warning: LinuxSafeStorageWarning): void {
 
 app.whenReady().then(() => {
   initializeSecretVault()
+
+  // Il core di orchestrazione e indipendente dal trasporto; l'IPC e solo
+  // l'adattatore che lo collega al renderer.
+  registerCoreIpc(createCore())
 
   if (!isDev) {
     registerAppProtocol()

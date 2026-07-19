@@ -28,6 +28,7 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "node scripts/validate-knowledge-base.mjs",
     "test:unit": "npm run test --workspaces --if-present",
+    "test:core": "npm run test -w packages/core",
     "test:worker": "npm run test -w packages/worker",
     "test:index": "npm run test -w packages/index",
     "test:security": "npm run test:security -w apps/desktop",
