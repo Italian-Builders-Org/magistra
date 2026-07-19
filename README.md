@@ -13,31 +13,15 @@ Questo prodotto è ideato, gestito e costruito dalla community **[Italian Builde
 ## Stato attuale
 
 Il progetto è agli **inizi**.
-In questa fase il repository contiene la **knowledge base** ([`knowledge/`](knowledge/)) e gli script per validarla e generarne un PDF — **non c'è ancora un'applicazione da avviare** (niente `npm run dev`, niente app desktop installabile).
+In questa fase il repository contiene:
+
+- la **knowledge base** ([`knowledge/`](knowledge/)), con gli script per validarla e generarne un PDF;
+- l'**app desktop Electron** in via di sviluppo, avviabile in locale;
+- i package workspace condivisi per UI, contratti condivisi e worker.
 
 Le funzionalità elencate più sotto (chat, ricerca semantica, analisi documenti) descrivono l'**obiettivo** del prodotto, non ciò che è già eseguibile oggi.
 
 👉 **Per installazione, comandi e utilizzo pratico, leggi [`GETTING-STARTED.md`](GETTING-STARTED.md).**
-
----
-
-## Inizia qui
-
-**Prerequisiti:** Node.js 18+ e Git.
-
-```bash
-git clone https://github.com/Italian-Builders-Org/Italian-OSS-Legal-Platform.git
-cd Italian-OSS-Legal-Platform
-npm install
-npm test
-```
-
-| Comando | Cosa fa |
-|---|---|
-| `npm test` | Valida la knowledge base |
-| `npm run build:pdf` | Genera un PDF della documentazione in `dist/` |
-
-Per esplorare i concetti con link e grafo, apri la cartella [`knowledge/`](knowledge/) come vault **Obsidian** (vedi [GETTING-STARTED.md](GETTING-STARTED.md#aprire-la-knowledge-base-in-obsidian)).
 
 ---
 
@@ -76,19 +60,20 @@ Il progetto si fonda su fonti ufficiali e aperte:
 
 ## Architettura (proposta)
 
-Stack **TypeScript-first** end-to-end. Magistra è un'**app desktop** che gira interamente in locale, con tutti i dati sulla macchina dell'utente.
+Stack **TypeScript-first** end-to-end.
+Magistra è un'**app desktop Electron** che gira interamente in locale, con tutti i dati sulla macchina dell'utente.
 
-- **Frontend**: Next.js (TypeScript)
+- **Frontend**: renderer React + Vite dentro Electron
 - **Backend / API**: Node (TypeScript); l'ingest pesante gira come **job batch** separato dall'assistente
 - **Database**: **PGlite** embedded (Postgres in WASM) con `pgvector` per la ricerca semantica
 - **Storage**: filesystem locale per i documenti dell'utente
-- **Distribuzione**: app desktop installabile (es. Electron), senza Docker
+- **Distribuzione**: app desktop installabile con Electron, senza Docker
 - **Pipeline dati**: ingest da Normattiva (Akoma Ntoso → parsing → chunking → embedding); indice distribuito già pronto nel bundle
 - **RAG**: retrieval con citazioni → generazione con LLM
 - **Modelli**: configurabili, almeno un provider a scelta (con possibilità di modelli eseguiti in locale)
 
-```
-Utente → Frontend (Next.js)
+```text
+Utente → Renderer React (Electron)
             │
             ▼
         Backend / API ──► Vector DB (pgvector) ──► Fonti normative (Akoma Ntoso / ELI)
@@ -106,7 +91,7 @@ Il progetto è agli inizi e i contributi sono benvenuti: pipeline dati, parsing 
 
 1. Leggi [`GETTING-STARTED.md`](GETTING-STARTED.md) per setup e comandi disponibili.
 2. Apri una *issue* per proposte o bug.
-3. Per modifiche, apri una *pull request* con descrizione chiara ed esegui `npm test` prima di inviarla.
+3. Per modifiche, apri una *pull request* con descrizione chiara ed esegui le verifiche indicate nel getting started.
 4. Linee guida dettagliate: [`CONTRIBUTING.md`](CONTRIBUTING.md) e [`AGENTS.md`](AGENTS.md) (convenzioni della knowledge base).
 
 ---
@@ -119,12 +104,9 @@ La knowledge base del progetto è in [`knowledge/`](knowledge/), strutturata com
 - [Modello dati e parsing Akoma Ntoso](knowledge/modello-dati/index.md) — FRBR, ELI, schema interno e pipeline.
 - [Architettura](knowledge/architettura/index.md) — componenti e flusso RAG.
 - [Glossario](knowledge/glossario/index.md) — termini giuridici e tecnici.
+- [UI library](packages/ui/README.md) — componenti condivisi e aggiunta di componenti shadcn.
 
-### Aprire la knowledge base in Obsidian
-
-La cartella [`knowledge/`](knowledge/) è anche un **vault [Obsidian](https://obsidian.md/)**: aprila come vault per esplorare i concetti e i loro collegamenti nella vista a grafo. La configurazione del vault è versionata in `knowledge/.obsidian/`, così chiunque cloni il repository ottiene la **stessa configurazione** (plugin, aspetto, impostazioni del grafo) senza doverla ricreare.
-
-Istruzioni passo passo: [GETTING-STARTED.md — Obsidian](GETTING-STARTED.md#aprire-la-knowledge-base-in-obsidian).
+Per setup, avvio dell'app Electron, validazione, generazione PDF e apertura della knowledge base in Obsidian, usa [`GETTING-STARTED.md`](GETTING-STARTED.md).
 
 Per contribuire: [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
