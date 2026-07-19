@@ -1,8 +1,8 @@
 {
-  "name": "@magistra/shared",
+  "name": "@magistra/core",
   "version": "0.0.1",
   "private": true,
-  "description": "Tipi e contratti condivisi tra frontend, backend e worker, con validazione Zod ai confini.",
+  "description": "Core di orchestrazione indipendente dal trasporto: implementa il contratto tipizzato delle operazioni, invocabile direttamente e testabile senza Electron.",
   "license": "AGPL-3.0-or-later",
   "type": "module",
   "sideEffects": false,
@@ -16,9 +16,11 @@
     }
   },
   "scripts": {
+    "test": "node --experimental-strip-types --experimental-default-type=module --test 'test/*.test.ts'",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@magistra/shared": "*",
     "zod": "^3.24.0"
   }
 }

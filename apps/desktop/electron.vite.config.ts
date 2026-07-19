@@ -7,12 +7,17 @@ import tailwindcss from '@tailwindcss/vite'
 // con un'unica configurazione e HMR in sviluppo. Il renderer è un puro bundle
 // statico React: in produzione viene servito dal protocollo locale `app://`
 // (vedi src/main/index.ts), senza aprire porte.
+// I pacchetti di workspace (@magistra/*) sono distribuiti come sorgenti
+// TypeScript, non come JS compilato: vanno bundlati da Vite in main e preload,
+// non esternalizzati (Node non saprebbe importare i loro .ts a runtime).
+const workspacePackages = ['@magistra/shared', '@magistra/core']
+
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin()]
+    plugins: [externalizeDepsPlugin({ exclude: workspacePackages })]
   },
   preload: {
-    plugins: [externalizeDepsPlugin()]
+    plugins: [externalizeDepsPlugin({ exclude: workspacePackages })]
   },
   renderer: {
     resolve: {
