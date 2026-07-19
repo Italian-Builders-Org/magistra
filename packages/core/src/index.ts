@@ -3,8 +3,43 @@ import {
   operationContracts,
   type OperationName,
   type OperationRequest,
-  type OperationResponse
+  type OperationResponse,
+  type ProviderConfigInput,
+  type ProviderTestResult,
+  type ProviderView
 } from '@magistra/shared'
+
+// Servizio della gestione delle API key (configurazione dei provider).
+//
+// E una porta: il core dichiara l'interfaccia e delega, ma non conosce ne il
+// database ne il Vercel AI SDK. L'implementazione concreta (che cifra i segreti
+// con il vault del SO, li conserva nello strato dati e testa la connessione con
+// l'astrazione dei provider) vive nel processo main e viene iniettata in
+// `createCore`. Cosi il core resta indipendente dal trasporto e leggero,
+// caricabile da Node nei test senza trascinare PGlite o l'SDK LLM.
+//
+// I metodi possono sollevare `OperationError` con codice stabile (`NOT_FOUND`,
+// `INVALID_REQUEST`), che attraversa l'IPC gia serializzato.
+
+/** La porta della configurazione dei provider LLM, iniettata nel core. */
+export interface ProviderSettingsService {
+  /** Elenca i provider configurati, senza esporne i segreti. */
+  list(): Promise<ProviderView[]>
+  /** Crea o aggiorna la configurazione di un provider; cifra la chiave se presente. */
+  save(input: ProviderConfigInput): Promise<ProviderView>
+  /** Rimuove un provider e la sua chiave cifrata. */
+  remove(id: string): Promise<boolean>
+  /** Rende attivo un provider (al piu uno), disattivando gli altri. */
+  activate(id: string): Promise<ProviderView>
+  /** Testa la raggiungibilita del provider e la presenza del modello. */
+  testConnection(id: string): Promise<ProviderTestResult>
+}
+
+/** Dipendenze iniettabili nel core. */
+export interface CoreDeps {
+  /** Servizio della gestione delle API key; assente nei test del solo contratto. */
+  readonly providerSettings?: ProviderSettingsService
+}
 
 // Core di orchestrazione, indipendente dal trasporto.
 //
@@ -46,11 +81,35 @@ export interface Core {
   invoke<K extends OperationName>(operation: K, payload: unknown): Promise<OperationResponse<K>>
 }
 
-/** Crea un'istanza del core. */
-export function createCore(): Core {
+/**
+ * Restituisce il servizio dei provider iniettato, oppure solleva
+ * `NOT_IMPLEMENTED`: cosi `createCore()` senza dipendenze resta valido per i
+ * test del solo contratto, mentre l'app lo cabla nel processo main.
+ */
+function requireProviderSettings(deps: CoreDeps): ProviderSettingsService {
+  if (!deps.providerSettings) {
+    throw new OperationError(
+      'NOT_IMPLEMENTED',
+      'La gestione delle API key non e disponibile: servizio non configurato.'
+    )
+  }
+  return deps.providerSettings
+}
+
+/** Crea un'istanza del core, opzionalmente con le dipendenze iniettate. */
+export function createCore(deps: CoreDeps = {}): Core {
   const handlers: OperationHandlers = {
     // Esempio implementato: rimbalza il messaggio ricevuto.
     echo: (request) => ({ message: request.message }),
+
+    // Gestione delle API key: delega al servizio iniettato.
+    providerList: async () => ({ providers: await requireProviderSettings(deps).list() }),
+    providerSave: (request) => requireProviderSettings(deps).save(request),
+    providerDelete: async (request) => ({
+      deleted: await requireProviderSettings(deps).remove(request.id)
+    }),
+    providerActivate: (request) => requireProviderSettings(deps).activate(request.id),
+    providerTest: (request) => requireProviderSettings(deps).testConnection(request.id),
 
     // Contratti gia tipizzati, logica nei task dedicati.
     chat: () => {

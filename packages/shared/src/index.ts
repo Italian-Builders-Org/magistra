@@ -101,6 +101,129 @@ export const uploadResponseSchema = z.object({
   documentId: z.string()
 })
 
+// === Gestione delle API key (configurazione dei provider) ====================
+//
+// Contratti della configurazione locale dei provider LLM: l'utente porta la
+// propria chiave, con separazione netta tra il segreto (cifrato a riposo, mai
+// restituito) e la configurazione non segreta (provider, base URL, id modello,
+// timeout, modalita privacy) conservata nel database applicativo.
+//
+// Questi schemi sono DTO indipendenti dal Vercel AI SDK: riecheggiano la forma
+// di `@magistra/provider` ma vivono qui, cosi il renderer e il preload non
+// trascinano l'SDK nel bundle. Il processo main mappa il DTO sulla
+// configurazione concreta del provider per il test di connessione.
+
+/**
+ * Provider supportati. Riecheggia `providerKindSchema` di `@magistra/provider`;
+ * `openai-compatible` copre i gateway remoti e i runtime self-hosted (Ollama,
+ * LM Studio, llama.cpp), dove la chiave e opzionale e la `base_url` obbligatoria.
+ */
+export const providerKindSchema = z.enum(['anthropic', 'google', 'openai', 'openai-compatible'])
+
+/** Tipo di provider. */
+export type ProviderKind = z.infer<typeof providerKindSchema>
+
+/**
+ * Modalita privacy: quanto contesto e lecito inviare al provider. E
+ * configurazione non segreta; il valore di default e `standard`.
+ */
+export const modalitaPrivacySchema = z.enum(['standard', 'rigorosa'])
+
+/** Modalita privacy configurata per un provider. */
+export type ModalitaPrivacy = z.infer<typeof modalitaPrivacySchema>
+
+/** Esito del test di connessione a un provider, come mostrato in UI. */
+export const statoConnessioneSchema = z.enum(['ok', 'non_raggiungibile', 'modello_mancante'])
+
+/** Stato di raggiungibilita di un provider. */
+export type StatoConnessione = z.infer<typeof statoConnessioneSchema>
+
+/**
+ * Dati per creare o aggiornare la configurazione di un provider.
+ * `id` presente => aggiornamento; assente => creazione. `apiKey` e il segreto in
+ * chiaro: presente solo quando l'utente lo inserisce o lo cambia, non viene mai
+ * restituito. Se assente in aggiornamento, la chiave gia salvata resta invariata;
+ * la stringa vuota rimuove la chiave (utile per un endpoint locale senza auth).
+ * I vincoli semantici (`base_url` per l'endpoint OpenAI-compatibile, chiave
+ * richiesta per i provider remoti) sono verificati dal servizio.
+ */
+export const providerConfigInputSchema = z.object({
+  id: z.string().min(1).optional(),
+  kind: providerKindSchema,
+  /** Etichetta leggibile, utile per un endpoint OpenAI-compatibile. */
+  nome: z.string().trim().min(1).max(120).optional(),
+  /** Indirizzo dell'endpoint, ad esempio `http://localhost:11434/v1`. */
+  baseUrl: z.string().trim().url().optional(),
+  generationModel: z.string().trim().min(1).max(200).optional(),
+  embeddingModel: z.string().trim().min(1).max(200).optional(),
+  /** Timeout della richiesta al provider, in millisecondi. */
+  timeoutMs: z.number().int().positive().max(600_000).optional(),
+  privacy: modalitaPrivacySchema.optional(),
+  /** Segreto in chiaro. Non attraversa mai il confine in uscita. */
+  apiKey: z.string().max(4096).optional(),
+  /**
+   * Header di autenticazione per un endpoint OpenAI-compatibile sulla rete dello
+   * studio (nome -> valore). Sono segreti: cifrati a riposo come la chiave e
+   * mai restituiti. Solo per `openai-compatible`; ignorati per gli altri kind.
+   * Presenti solo quando si (ri)definiscono: assenti in aggiornamento li lascia
+   * invariati, l'oggetto vuoto li rimuove.
+   */
+  headers: z.record(z.string().trim().min(1).max(200), z.string().max(4096)).optional()
+})
+
+/** Dati per creare o aggiornare un provider. */
+export type ProviderConfigInput = z.infer<typeof providerConfigInputSchema>
+
+/**
+ * Vista di un provider configurato, priva di qualsiasi segreto: `haChiave`
+ * segnala soltanto la presenza di una chiave, che non viene mai restituita.
+ */
+export const providerViewSchema = z.object({
+  id: z.string(),
+  kind: providerKindSchema,
+  nome: z.string().nullable(),
+  baseUrl: z.string().nullable(),
+  generationModel: z.string().nullable(),
+  embeddingModel: z.string().nullable(),
+  timeoutMs: z.number().int().positive().nullable(),
+  privacy: modalitaPrivacySchema,
+  /** Presenza di una chiave cifrata, senza esporne il valore. */
+  haChiave: z.boolean(),
+  /** Quanti header di autenticazione custom sono configurati, senza esporli. */
+  numeroHeader: z.number().int().nonnegative(),
+  /** Provider attivo per le generazioni (al piu uno). */
+  attivo: z.boolean(),
+  creata_il: z.string(),
+  aggiornata_il: z.string()
+})
+
+/** Vista non segreta di un provider configurato. */
+export type ProviderView = z.infer<typeof providerViewSchema>
+
+/** Richiesta della lista dei provider configurati. */
+export const providerListRequestSchema = z.object({})
+
+/** Risposta: i provider configurati, in ordine di creazione. */
+export const providerListResponseSchema = z.object({
+  providers: z.array(providerViewSchema)
+})
+
+/** Richiesta che riferisce un provider per identificativo. */
+export const providerRefRequestSchema = z.object({
+  id: z.string().min(1)
+})
+
+/** Risposta della cancellazione di un provider. */
+export const providerDeleteResponseSchema = z.object({
+  deleted: z.boolean()
+})
+
+/** Esito del test di connessione: stato e messaggio gia mascherato per la UI. */
+export const providerTestResponseSchema = z.object({
+  stato: statoConnessioneSchema,
+  messaggio: z.string()
+})
+
 /**
  * Registro di tutte le operazioni: nome -> { request, response }.
  * `as const` preserva i tipi letterali, cosi da derivare da qui i tipi delle
@@ -111,7 +234,12 @@ export const operationContracts = {
   chat: { request: chatRequestSchema, response: chatResponseSchema },
   retrieval: { request: retrievalRequestSchema, response: retrievalResponseSchema },
   search: { request: searchRequestSchema, response: searchResponseSchema },
-  upload: { request: uploadRequestSchema, response: uploadResponseSchema }
+  upload: { request: uploadRequestSchema, response: uploadResponseSchema },
+  providerList: { request: providerListRequestSchema, response: providerListResponseSchema },
+  providerSave: { request: providerConfigInputSchema, response: providerViewSchema },
+  providerDelete: { request: providerRefRequestSchema, response: providerDeleteResponseSchema },
+  providerActivate: { request: providerRefRequestSchema, response: providerViewSchema },
+  providerTest: { request: providerRefRequestSchema, response: providerTestResponseSchema }
 } as const
 
 /** Nome di una delle operazioni del contratto. */
@@ -142,6 +270,8 @@ export type SearchRequest = OperationRequest<'search'>
 export type SearchResponse = OperationResponse<'search'>
 export type UploadRequest = OperationRequest<'upload'>
 export type UploadResponse = OperationResponse<'upload'>
+export type ProviderListResponse = OperationResponse<'providerList'>
+export type ProviderTestResult = OperationResponse<'providerTest'>
 
 // === Confine dei messaggi (IPC) ==============================================
 //
@@ -159,6 +289,7 @@ export const operationErrorCodeSchema = z.enum([
   'INVALID_RESPONSE',
   'UNKNOWN_OPERATION',
   'NOT_IMPLEMENTED',
+  'NOT_FOUND',
   'INTERNAL'
 ])
 

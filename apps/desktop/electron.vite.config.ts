@@ -10,7 +10,12 @@ import tailwindcss from '@tailwindcss/vite'
 // I pacchetti di workspace (@magistra/*) sono distribuiti come sorgenti
 // TypeScript, non come JS compilato: vanno bundlati da Vite in main e preload,
 // non esternalizzati (Node non saprebbe importare i loro .ts a runtime).
-const workspacePackages = ['@magistra/shared', '@magistra/core']
+const workspacePackages = [
+  '@magistra/shared',
+  '@magistra/core',
+  '@magistra/data',
+  '@magistra/provider'
+]
 
 export default defineConfig({
   main: {
