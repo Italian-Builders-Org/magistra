@@ -215,3 +215,60 @@ export function toEnvelopeError(error: unknown): IpcError {
 
   return { code: 'INTERNAL', message: 'Errore sconosciuto' }
 }
+
+// === Contratto dei job batch =================================================
+//
+// Forma osservabile di un job batch del worker: l'avanzamento mentre gira e il
+// riepilogo quando arriva in fondo. Sono forme di dato, non operazioni: la
+// superficie per avviare o osservare un job dall'esterno appartiene al core di
+// orchestrazione, non a questo contratto.
+//
+// Un job che non arriva in fondo non produce un riepilogo, fallisce: per
+// questo gli stati terminali sono soltanto due.
+
+/** Stato terminale di un job batch arrivato in fondo. */
+export const jobStatoSchema = z.enum(['completato', 'completato_con_quarantena'])
+
+/** Stato terminale di un job batch. */
+export type JobStato = z.infer<typeof jobStatoSchema>
+
+/** Metadati che identificano un job: quale e di che tipo. */
+export const jobDescriptorMetaSchema = z.object({
+  jobId: z.string().min(1),
+  tipo: z.string().min(1)
+})
+
+/** Metadati che identificano un job. */
+export type JobDescriptorMeta = z.infer<typeof jobDescriptorMetaSchema>
+
+/**
+ * Conteggi di un job. `elaborati` e la somma degli altri tre: e ridondante per
+ * comodita di chi mostra un avanzamento, e l'invariante e verificata dai test
+ * del worker.
+ * `totale` e noto solo quando la sorgente degli item e finita; su una sorgente
+ * in streaming resta `null`, che e piu onesto di un totale inventato.
+ */
+export const jobConteggiSchema = z.object({
+  elaborati: z.number().int().nonnegative(),
+  ok: z.number().int().nonnegative(),
+  parziali: z.number().int().nonnegative(),
+  inQuarantena: z.number().int().nonnegative(),
+  totale: z.number().int().nonnegative().nullable()
+})
+
+/** Conteggi di un job. */
+export type JobConteggi = z.infer<typeof jobConteggiSchema>
+
+/** Avanzamento di un job in corso, emesso dopo ogni item. */
+export const jobProgressSchema = jobDescriptorMetaSchema.merge(jobConteggiSchema)
+
+/** Avanzamento di un job in corso. */
+export type JobProgress = z.infer<typeof jobProgressSchema>
+
+/** Riepilogo finale di un job arrivato in fondo. */
+export const jobSummarySchema = jobProgressSchema.extend({
+  stato: jobStatoSchema
+})
+
+/** Riepilogo finale di un job. */
+export type JobSummary = z.infer<typeof jobSummarySchema>
