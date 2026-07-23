@@ -3,8 +3,11 @@ import { join, normalize, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
 import { createCore } from '@magistra/core'
+import { openDataStore, type DataStore } from '@magistra/data'
 
 import { registerCoreIpc } from './ipc'
+import { createProviderSettingsService } from './providers/service'
+import { createVaultCipher } from './providers/secret-cipher'
 import { SecretVault, type LinuxSafeStorageWarning } from './security/secret-vault'
 
 // In sviluppo electron-vite espone l'URL del dev server (con HMR) in questa
@@ -12,6 +15,7 @@ import { SecretVault, type LinuxSafeStorageWarning } from './security/secret-vau
 const rendererDevUrl = process.env['ELECTRON_RENDERER_URL']
 const isDev = !!rendererDevUrl
 let secretVault: SecretVault | null = null
+let dataStore: DataStore | null = null
 
 // Lo schema `app://` va dichiarato come privilegiato PRIMA che l'app sia pronta:
 // è standard (URL assoluti/relativi risolti come sul web), sicuro (contesto
@@ -99,12 +103,33 @@ function showLinuxSafeStorageWarning(warning: LinuxSafeStorageWarning): void {
   })
 }
 
-app.whenReady().then(() => {
+export function getDataStore(): DataStore {
+  if (!dataStore) {
+    throw new Error('Lo store dei dati non e ancora inizializzato.')
+  }
+
+  return dataStore
+}
+
+// Apre il database applicativo (PGlite) nella cartella dati dell'app e ne porta
+// lo schema alla versione corrente. E il primo consumatore dello strato dati:
+// la configurazione dei provider vive qui.
+async function initializeDataStore(): Promise<void> {
+  dataStore = await openDataStore({ dataDir: join(app.getPath('userData'), 'app-db') })
+}
+
+app.whenReady().then(async () => {
   initializeSecretVault()
+  await initializeDataStore()
 
   // Il core di orchestrazione e indipendente dal trasporto; l'IPC e solo
-  // l'adattatore che lo collega al renderer.
-  registerCoreIpc(createCore())
+  // l'adattatore che lo collega al renderer. La gestione delle API key riceve
+  // lo strato dati e la cifratura del vault, iniettati qui.
+  const providerSettings = createProviderSettingsService({
+    chiaviApi: getDataStore().chiaviApi,
+    cipher: createVaultCipher(getSecretVault())
+  })
+  registerCoreIpc(createCore({ providerSettings }))
 
   if (!isDev) {
     registerAppProtocol()
@@ -115,6 +140,10 @@ app.whenReady().then(() => {
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
+})
+
+app.on('will-quit', () => {
+  void dataStore?.close()
 })
 
 app.on('window-all-closed', () => {

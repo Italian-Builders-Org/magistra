@@ -3,6 +3,7 @@ import { ipcMain } from 'electron'
 import type { Core } from '@magistra/core'
 import {
   IPC_INVOKE_CHANNEL,
+  descriviErroriValidazione,
   ipcRequestSchema,
   toEnvelopeError,
   type IpcResponse
@@ -25,7 +26,7 @@ export function registerCoreIpc(core: Core): void {
     if (!parsed.success) {
       return {
         ok: false,
-        error: { code: 'INVALID_REQUEST', message: parsed.error.message }
+        error: { code: 'INVALID_REQUEST', message: descriviErroriValidazione(parsed.error) }
       }
     }
 

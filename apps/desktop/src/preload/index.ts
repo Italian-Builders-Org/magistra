@@ -43,7 +43,15 @@ const api = {
   chat: (payload: OperationRequest<'chat'>) => invoke('chat', payload),
   retrieval: (payload: OperationRequest<'retrieval'>) => invoke('retrieval', payload),
   search: (payload: OperationRequest<'search'>) => invoke('search', payload),
-  upload: (payload: OperationRequest<'upload'>) => invoke('upload', payload)
+  upload: (payload: OperationRequest<'upload'>) => invoke('upload', payload),
+  // Gestione delle API key (configurazione dei provider).
+  providerList: (payload: OperationRequest<'providerList'>) => invoke('providerList', payload),
+  providerSave: (payload: OperationRequest<'providerSave'>) => invoke('providerSave', payload),
+  providerDelete: (payload: OperationRequest<'providerDelete'>) =>
+    invoke('providerDelete', payload),
+  providerActivate: (payload: OperationRequest<'providerActivate'>) =>
+    invoke('providerActivate', payload),
+  providerTest: (payload: OperationRequest<'providerTest'>) => invoke('providerTest', payload)
 }
 
 if (process.contextIsolated) {

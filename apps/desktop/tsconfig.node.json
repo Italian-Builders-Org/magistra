@@ -1,8 +1,11 @@
 {
   "extends": "../../tsconfig.base.json",
-  "include": ["electron.vite.config.ts", "src/main/**/*", "src/preload/**/*"],
+  "include": ["electron.vite.config.ts", "src/main/**/*", "src/preload/**/*", "test/**/*"],
   "compilerOptions": {
     "composite": true,
-    "types": ["node", "electron-vite/node"]
+    "types": ["node", "electron-vite/node"],
+    // I test girano su Node con `--experimental-strip-types` e importano i
+    // sorgenti con l'estensione `.ts` esplicita: serve per typecheckarli.
+    "allowImportingTsExtensions": true
   }
 }
