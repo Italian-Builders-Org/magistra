@@ -74,6 +74,18 @@ function bozzaVuota(kind: ProviderKind = 'anthropic'): Bozza {
   }
 }
 
+/**
+ * Primo tipo di provider ancora configurabile, su cui aprire il form nuovo.
+ * L'endpoint OpenAI-compatibile e sempre disponibile (piu macchine, piu righe)
+ * ed e quindi il ripiego naturale quando i remoti sono tutti presi.
+ */
+function primoKindLibero(configurati: ProviderView[]): ProviderKind {
+  const presi = new Set(configurati.map((p) => p.kind))
+  return (
+    KIND_PROVIDER.find((kind) => kind === 'openai-compatible' || !presi.has(kind)) ?? 'anthropic'
+  )
+}
+
 function bozzaDaProvider(p: ProviderView): Bozza {
   return {
     id: p.id,
@@ -153,7 +165,20 @@ export function SettingsPage() {
   const [bozza, setBozza] = useState<Bozza | null>(null)
   const [salvataggioInCorso, setSalvataggioInCorso] = useState(false)
   const [idOccupato, setIdOccupato] = useState<string | null>(null)
+  const [idDaEliminare, setIdDaEliminare] = useState<string | null>(null)
   const [esitiTest, setEsitiTest] = useState<Record<string, ProviderTestResult | 'loading'>>({})
+
+  // L'esito di un test vale per la configurazione con cui e stato ottenuto:
+  // appena questa cambia (o il provider sparisce) va buttato, altrimenti si
+  // continuerebbe a mostrare «Raggiungibile» accanto a dati ormai diversi.
+  const scartaEsito = useCallback((id: string) => {
+    setEsitiTest((precedente) => {
+      if (!(id in precedente)) return precedente
+      const resto = { ...precedente }
+      delete resto[id]
+      return resto
+    })
+  }, [])
 
   const aggiorna = useCallback(async () => {
     setCaricamento(true)
@@ -178,6 +203,7 @@ export function SettingsPage() {
     setErrore(null)
     try {
       await window.magistra.providerSave(bozzaAInput(bozza))
+      if (bozza.id) scartaEsito(bozza.id)
       setBozza(null)
       await aggiorna()
     } catch (e) {
@@ -189,9 +215,11 @@ export function SettingsPage() {
 
   async function elimina(id: string): Promise<void> {
     setIdOccupato(id)
+    setIdDaEliminare(null)
     setErrore(null)
     try {
       await window.magistra.providerDelete({ id })
+      scartaEsito(id)
       if (bozza?.id === id) setBozza(null)
       await aggiorna()
     } catch (e) {
@@ -231,7 +259,11 @@ export function SettingsPage() {
     <section className="mx-auto max-w-3xl">
       <div className="flex items-center justify-between">
         <h1 className="text-4xl font-extrabold tracking-tight text-balance">Impostazioni</h1>
-        {!bozza && <Button onClick={() => setBozza(bozzaVuota())}>Aggiungi provider</Button>}
+        {!bozza && (
+          <Button onClick={() => setBozza(bozzaVuota(primoKindLibero(providers)))}>
+            Aggiungi provider
+          </Button>
+        )}
       </div>
 
       <p className="mt-2 text-sm text-muted-foreground">
@@ -248,6 +280,7 @@ export function SettingsPage() {
       {bozza && (
         <FormProvider
           bozza={bozza}
+          kindGiaConfigurati={providers.map((p) => p.kind)}
           onChange={setBozza}
           onSalva={salva}
           onAnnulla={() => setBozza(null)}
@@ -267,7 +300,10 @@ export function SettingsPage() {
               provider={p}
               esito={esitiTest[p.id]}
               occupato={idOccupato === p.id}
+              inConferma={idDaEliminare === p.id}
               onModifica={() => setBozza(bozzaDaProvider(p))}
+              onChiediElimina={() => setIdDaEliminare(p.id)}
+              onAnnullaElimina={() => setIdDaEliminare(null)}
               onElimina={() => elimina(p.id)}
               onAttiva={() => attiva(p.id)}
               onTesta={() => testa(p.id)}
@@ -283,12 +319,13 @@ export function SettingsPage() {
 
 function FormProvider(props: {
   bozza: Bozza
+  kindGiaConfigurati: ProviderKind[]
   onChange: (b: Bozza) => void
   onSalva: () => void
   onAnnulla: () => void
   inCorso: boolean
 }) {
-  const { bozza, onChange, onSalva, onAnnulla, inCorso } = props
+  const { bozza, kindGiaConfigurati, onChange, onSalva, onAnnulla, inCorso } = props
   const modifica = !!bozza.id
   const modelliGen = useMemo(() => SUGGERIMENTI_GENERAZIONE[bozza.kind], [bozza.kind])
   const modelliEmb = useMemo(() => SUGGERIMENTI_EMBEDDING[bozza.kind], [bozza.kind])
@@ -314,11 +351,19 @@ function FormProvider(props: {
           disabled={modifica}
           onChange={(e) => imposta('kind', e.target.value as ProviderKind)}
         >
-          {KIND_PROVIDER.map((kind) => (
-            <option key={kind} value={kind}>
-              {ETICHETTE_PROVIDER[kind]}
-            </option>
-          ))}
+          {KIND_PROVIDER.map((kind) => {
+            // Di un provider remoto se ne configura uno solo (il servizio lo
+            // impone): mostrarlo comunque, ma non selezionabile, evita di far
+            // compilare un form che verrebbe rifiutato al salvataggio.
+            const giaPreso =
+              !modifica && kind !== 'openai-compatible' && kindGiaConfigurati.includes(kind)
+            return (
+              <option key={kind} value={kind} disabled={giaPreso}>
+                {ETICHETTE_PROVIDER[kind]}
+                {giaPreso ? ' (gia configurato)' : ''}
+              </option>
+            )
+          })}
         </select>
       </Campo>
 
@@ -536,12 +581,15 @@ function ProviderCard(props: {
   provider: ProviderView
   esito: ProviderTestResult | 'loading' | undefined
   occupato: boolean
+  inConferma: boolean
   onModifica: () => void
+  onChiediElimina: () => void
+  onAnnullaElimina: () => void
   onElimina: () => void
   onAttiva: () => void
   onTesta: () => void
 }) {
-  const { provider: p, esito, occupato } = props
+  const { provider: p, esito, occupato, inConferma } = props
   const titolo = p.nome ?? ETICHETTE_PROVIDER[p.kind]
 
   return (
@@ -579,22 +627,48 @@ function ProviderCard(props: {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {!p.attivo && (
-          <Button size="sm" variant="outline" onClick={props.onAttiva} disabled={occupato}>
-            Attiva
+      {/* L'eliminazione e irreversibile: la chiave cifrata sparisce e va
+          reinserita. Il secondo click e la conferma. */}
+      {inConferma ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm text-destructive">
+            Eliminare «{titolo}»? La chiave salvata andra reinserita.
+          </span>
+          <Button size="sm" variant="destructive" onClick={props.onElimina} disabled={occupato}>
+            Elimina definitivamente
           </Button>
-        )}
-        <Button size="sm" variant="outline" onClick={props.onTesta} disabled={esito === 'loading'}>
-          Testa connessione
-        </Button>
-        <Button size="sm" variant="ghost" onClick={props.onModifica} disabled={occupato}>
-          Modifica
-        </Button>
-        <Button size="sm" variant="destructive" onClick={props.onElimina} disabled={occupato}>
-          Elimina
-        </Button>
-      </div>
+          <Button size="sm" variant="ghost" onClick={props.onAnnullaElimina} disabled={occupato}>
+            Annulla
+          </Button>
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {!p.attivo && (
+            <Button size="sm" variant="outline" onClick={props.onAttiva} disabled={occupato}>
+              Attiva
+            </Button>
+          )}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={props.onTesta}
+            disabled={esito === 'loading'}
+          >
+            Testa connessione
+          </Button>
+          <Button size="sm" variant="ghost" onClick={props.onModifica} disabled={occupato}>
+            Modifica
+          </Button>
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={props.onChiediElimina}
+            disabled={occupato}
+          >
+            Elimina
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import {
   OperationError,
+  descriviErroriValidazione,
   operationContracts,
   type OperationName,
   type OperationRequest,
@@ -27,7 +28,7 @@ export interface ProviderSettingsService {
   list(): Promise<ProviderView[]>
   /** Crea o aggiorna la configurazione di un provider; cifra la chiave se presente. */
   save(input: ProviderConfigInput): Promise<ProviderView>
-  /** Rimuove un provider e la sua chiave cifrata. */
+  /** Rimuove un provider e la sua chiave cifrata; `NOT_FOUND` se non esiste. */
   remove(id: string): Promise<boolean>
   /** Rende attivo un provider (al piu uno), disattivando gli altri. */
   activate(id: string): Promise<ProviderView>
@@ -147,7 +148,7 @@ export function createCore(deps: CoreDeps = {}): Core {
     if (!parsedRequest.success) {
       throw new OperationError(
         'INVALID_REQUEST',
-        `Richiesta non valida per «${operation}»: ${parsedRequest.error.message}`
+        `Richiesta non valida per «${operation}»: ${descriviErroriValidazione(parsedRequest.error)}`
       )
     }
 
@@ -158,7 +159,7 @@ export function createCore(deps: CoreDeps = {}): Core {
     if (!parsedResponse.success) {
       throw new OperationError(
         'INVALID_RESPONSE',
-        `Risposta non valida per «${operation}»: ${parsedResponse.error.message}`
+        `Risposta non valida per «${operation}»: ${descriviErroriValidazione(parsedResponse.error)}`
       )
     }
 

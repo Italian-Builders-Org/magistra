@@ -9,6 +9,7 @@ import {
 } from '@magistra/provider'
 import {
   OperationError,
+  descriviErroriValidazione,
   modalitaPrivacySchema,
   providerConfigInputSchema,
   providerKindSchema,
@@ -44,7 +45,13 @@ const MAX_TOKEN_TEST = 1
 /**
  * Configurazione non segreta conservata in `chiave_api.configurazione`.
  * E lo schema con cui la si rilegge dal database in modo difensivo: una riga
- * scritta da una versione futura con campi in piu non fa cadere la lettura.
+ * scritta da una versione futura non fa cadere la lettura. La difesa e su due
+ * fronti, perche `ChiaveApiRepository.update` rimpiazza la colonna per intero:
+ *   - in lettura si usa `safeParse` con ripiego sui default, cosi un valore
+ *     fuori vocabolario (una `privacy` non ancora nota) degrada quella riga
+ *     invece di far fallire l'intera lista;
+ *   - in scrittura si riscrive il record grezzo e vi si sovrappongono i soli
+ *     campi noti, cosi i campi sconosciuti sopravvivono al salvataggio.
  */
 const configurazioneSchema = z.object({
   nome: z.string().nullable().default(null),
@@ -121,28 +128,47 @@ export function createProviderSettingsService(deps: ProviderSettingsDeps): Provi
     return cipher.encrypt(JSON.stringify(segreti))
   }
 
+  /**
+   * Rilegge il blob dei segreti. Un fallimento non viene mai inghiottito: se lo
+   * restituissimo come «nessun segreto», il chiamante riscriverebbe il blob
+   * senza la chiave e la distruggerebbe in silenzio. Meglio interrompere
+   * l'operazione con un errore esplicito, che non tocca nulla sul disco.
+   */
   async function decifraSegreti(valore_cifrato: string): Promise<SegretiProvider> {
+    let chiaro: string
     try {
-      const parsed = JSON.parse(await cipher.decrypt(valore_cifrato)) as unknown
-      return isSegretiProvider(parsed) ? parsed : {}
-    } catch {
-      return {}
+      chiaro = await cipher.decrypt(valore_cifrato)
+    } catch (causa) {
+      throw new OperationError('INTERNAL', MESSAGGIO_SEGRETI_ILLEGGIBILI, { cause: causa })
     }
+
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(chiaro)
+    } catch (causa) {
+      throw new OperationError('INTERNAL', MESSAGGIO_SEGRETI_ILLEGGIBILI, { cause: causa })
+    }
+
+    if (!isSegretiProvider(parsed)) {
+      throw new OperationError('INTERNAL', MESSAGGIO_SEGRETI_ILLEGGIBILI)
+    }
+    return parsed
   }
 
   async function crea(dati: ProviderConfigInput, kind: ProviderKind): Promise<ProviderView> {
     verificaVincoli(kind, dati, { chiaveGiaPresente: false })
 
+    const righe = await chiaviApi.list()
+    verificaUnicita(kind, righe)
+
     const segreti = normalizzaSegreti(kind, dati.apiKey, dati.headers)
     const valore_cifrato = await cifraSegreti(segreti)
 
-    // Il primo provider configurato diventa attivo, cosi l'app ne ha subito uno.
-    const nessunProvider = (await chiaviApi.list()).length === 0
-
-    const configurazione = buildConfigurazione(dati, {
+    const configurazione = buildConfigurazione({}, dati, {
       haChiave: !!segreti.apiKey,
       numeroHeader: contaHeader(segreti.headers),
-      attivo: nessunProvider,
+      // Il primo provider configurato diventa attivo, cosi l'app ne ha subito uno.
+      attivo: righe.length === 0,
       privacy: dati.privacy ?? 'standard'
     })
 
@@ -156,7 +182,18 @@ export function createProviderSettingsService(deps: ProviderSettingsDeps): Provi
     kind: ProviderKind
   ): Promise<ProviderView> {
     const esistente = await caricaRiga(id)
-    const configEsistente = parseConfigurazione(esistente.configurazione)
+    const configEsistente = leggiConfigurazione(esistente.configurazione)
+
+    // Il tipo di provider e immutabile: cambiarlo lascerebbe dietro segreti
+    // orfani (gli header valgono solo per l'endpoint OpenAI-compatibile) e una
+    // configurazione che non corrisponde piu al kind. La UI blocca gia la
+    // tendina in modifica; qui si difende anche la via IPC.
+    if (esistente.provider !== kind) {
+      throw new OperationError(
+        'INVALID_REQUEST',
+        'Il tipo di provider non si puo cambiare: elimina questo provider e creane uno nuovo.'
+      )
+    }
 
     verificaVincoli(kind, dati, { chiaveGiaPresente: configEsistente.haChiave })
 
@@ -182,7 +219,7 @@ export function createProviderSettingsService(deps: ProviderSettingsDeps): Provi
       numeroHeader = contaHeader(headers)
     }
 
-    const configurazione = buildConfigurazione(dati, {
+    const configurazione = buildConfigurazione(esistente.configurazione, dati, {
       haChiave,
       numeroHeader,
       attivo: configEsistente.attivo,
@@ -201,8 +238,36 @@ export function createProviderSettingsService(deps: ProviderSettingsDeps): Provi
     return toView(riga)
   }
 
+  /** Riscrive il solo flag `attivo`, preservando il resto della configurazione. */
+  async function scriviAttivo(riga: ChiaveApi, attivo: boolean): Promise<ChiaveApi> {
+    const riscritta = await chiaviApi.update(riga.id, {
+      configurazione: { ...riga.configurazione, attivo }
+    })
+    if (!riscritta) {
+      throw new OperationError('NOT_FOUND', `Nessun provider con id «${riga.id}».`)
+    }
+    return riscritta
+  }
+
   async function remove(id: string): Promise<boolean> {
-    return chiaviApi.delete(id)
+    const righe = await chiaviApi.list()
+    const bersaglio = righe.find((riga) => riga.id === id)
+    if (!bersaglio) {
+      throw new OperationError('NOT_FOUND', `Nessun provider con id «${id}».`)
+    }
+
+    const eraAttivo = leggiConfigurazione(bersaglio.configurazione).attivo
+    const eliminato = await chiaviApi.delete(id)
+
+    // Eliminando il provider attivo l'app resterebbe senza: subentra il primo
+    // dei rimanenti (la lista e in ordine di creazione), come alla creazione del
+    // primo provider.
+    if (eliminato && eraAttivo) {
+      const successore = righe.find((riga) => riga.id !== id)
+      if (successore) await scriviAttivo(successore, true)
+    }
+
+    return eliminato
   }
 
   async function activate(id: string): Promise<ProviderView> {
@@ -212,34 +277,44 @@ export function createProviderSettingsService(deps: ProviderSettingsDeps): Provi
       throw new OperationError('NOT_FOUND', `Nessun provider con id «${id}».`)
     }
 
-    // Attivo esclusivo: si disattivano gli altri e si attiva il bersaglio.
-    let aggiornato: ChiaveApi | null = null
-    for (const riga of righe) {
-      const config = parseConfigurazione(riga.configurazione)
-      const attivoAtteso = riga.id === id
-      if (config.attivo === attivoAtteso) {
-        if (riga.id === id) aggiornato = riga
-        continue
-      }
-      const riscritta = await chiaviApi.update(riga.id, {
-        configurazione: { ...config, attivo: attivoAtteso }
-      })
-      if (riga.id === id) aggiornato = riscritta
+    // Attivo esclusivo. Lo strato dati non espone una transazione, quindi le
+    // scritture restano distinte: si attiva PRIMA il bersaglio e solo dopo si
+    // disattivano gli altri, cosi un'interruzione a meta lascia due provider
+    // attivi (stato ambiguo ma recuperabile) e mai zero (app senza provider).
+    let aggiornato: ChiaveApi = bersaglio
+    if (!leggiConfigurazione(bersaglio.configurazione).attivo) {
+      aggiornato = await scriviAttivo(bersaglio, true)
     }
 
-    return toView(aggiornato ?? bersaglio)
+    for (const riga of righe) {
+      if (riga.id === id) continue
+      if (!leggiConfigurazione(riga.configurazione).attivo) continue
+      await scriviAttivo(riga, false)
+    }
+
+    return toView(aggiornato)
   }
 
   async function testConnection(id: string): Promise<ProviderTestResult> {
     const riga = await caricaRiga(id)
-    const config = parseConfigurazione(riga.configurazione)
+    const config = leggiConfigurazione(riga.configurazione)
     const kind = providerKindSchema.parse(riga.provider)
 
     if (!config.generationModel && !config.embeddingModel) {
       return esito('modello_mancante', 'Nessun modello selezionato per questo provider.')
     }
 
-    const segreti = await decifraSegreti(riga.valore_cifrato)
+    // Un vault illeggibile non e un guasto del provider, ma non deve nemmeno
+    // far esplodere il test: si riporta come esito, distinguendolo dal resto.
+    let segreti: SegretiProvider
+    try {
+      segreti = await decifraSegreti(riga.valore_cifrato)
+    } catch (errore) {
+      if (errore instanceof OperationError && errore.code === 'INTERNAL') {
+        return esito('non_raggiungibile', MESSAGGIO_SEGRETI_ILLEGGIBILI)
+      }
+      throw errore
+    }
 
     let provider
     try {
@@ -253,30 +328,84 @@ export function createProviderSettingsService(deps: ProviderSettingsDeps): Provi
 
     const controller = new AbortController()
     const timeoutMs = config.timeoutMs ?? TIMEOUT_TEST_PREDEFINITO_MS
-    const timer = setTimeout(() => controller.abort(), timeoutMs)
+    const scadenza = avviaScadenza(timeoutMs, controller)
 
     try {
       if (provider.language) {
-        await provider.language.generate({
-          messages: [{ role: 'user', content: 'ping' }],
-          maxOutputTokens: MAX_TOKEN_TEST,
-          abortSignal: controller.signal
-        })
+        await scadenza.corsa(
+          provider.language.generate({
+            messages: [{ role: 'user', content: 'ping' }],
+            maxOutputTokens: MAX_TOKEN_TEST,
+            abortSignal: controller.signal
+          })
+        )
       } else {
-        await provider.requireEmbedding().embed('ping')
+        // `EmbeddingCapability.embed` non accetta un AbortSignal: la corsa con
+        // la scadenza e l'unico modo di non restare appesi per sempre. La
+        // richiesta sottostante prosegue in sottofondo, ma l'esito e nostro.
+        await scadenza.corsa(provider.requireEmbedding().embed('ping'))
       }
       return esito('ok', 'Provider raggiungibile.')
     } catch (errore) {
+      if (errore instanceof ScadenzaSuperata) {
+        return esito('non_raggiungibile', 'Il provider non ha risposto entro il timeout.')
+      }
       return interpretaErrore(errore)
     } finally {
-      clearTimeout(timer)
+      scadenza.annulla()
     }
   }
 
   return { list, save, remove, activate, testConnection }
 }
 
+// === Scadenza del test =======================================================
+
+/** Segnala che il test ha superato il timeout configurato. */
+class ScadenzaSuperata extends Error {
+  constructor() {
+    super('Il provider non ha risposto entro il timeout.')
+    this.name = 'ScadenzaSuperata'
+  }
+}
+
+/**
+ * Avvia la scadenza del test. Abortisce il segnale (per chi lo onora, cioe il
+ * percorso generativo) e mette comunque a disposizione una corsa, necessaria
+ * per il percorso di embedding, che un AbortSignal non lo accetta affatto.
+ */
+function avviaScadenza(
+  timeoutMs: number,
+  controller: AbortController
+): { corsa<T>(promessa: Promise<T>): Promise<T>; annulla(): void } {
+  let scatta: () => void = () => {}
+  const scaduta = new Promise<never>((_, reject) => {
+    scatta = () => reject(new ScadenzaSuperata())
+  })
+  // Nessuno attende `scaduta` finche non parte una corsa: senza questo handler
+  // il rigetto diventerebbe un unhandledRejection.
+  scaduta.catch(() => {})
+
+  const timer = setTimeout(() => {
+    controller.abort()
+    scatta()
+  }, timeoutMs)
+
+  return {
+    corsa: (promessa) => Promise.race([promessa, scaduta]),
+    annulla: () => clearTimeout(timer)
+  }
+}
+
 // === Helper puri =============================================================
+
+/**
+ * Messaggio unico per un blob di segreti illeggibile (vault non disponibile,
+ * chiave di cifratura cambiata, record corrotto). Non riporta alcun dettaglio
+ * del vault: dice all'utente cosa fare, non cosa e andato storto dentro.
+ */
+const MESSAGGIO_SEGRETI_ILLEGGIBILI =
+  'Impossibile decifrare i segreti di questo provider: reinserisci la API key.'
 
 /**
  * Valida di nuovo l'input con lo schema condiviso: il servizio puo essere
@@ -286,7 +415,10 @@ export function createProviderSettingsService(deps: ProviderSettingsDeps): Provi
 function parseInput(input: ProviderConfigInput): ProviderConfigInput {
   const esito = providerConfigInputSchema.safeParse(input)
   if (!esito.success) {
-    throw new OperationError('INVALID_REQUEST', `Configurazione non valida: ${esito.error.message}`)
+    throw new OperationError(
+      'INVALID_REQUEST',
+      `Configurazione non valida: ${descriviErroriValidazione(esito.error)}`
+    )
   }
   return esito.data
 }
@@ -321,12 +453,32 @@ function verificaVincoli(
   }
 }
 
-/** Costruisce la configurazione non segreta da conservare. */
+/**
+ * Rifiuta un secondo provider dello stesso tipo remoto. Il database non ha un
+ * vincolo di unicita (piu endpoint OpenAI-compatibili sono legittimi: sono
+ * macchine diverse), ma due «Anthropic» affiancati sono solo confusione.
+ */
+function verificaUnicita(kind: ProviderKind, righe: readonly ChiaveApi[]): void {
+  if (kind === 'openai-compatible') return
+  if (righe.some((riga) => riga.provider === kind)) {
+    throw new OperationError(
+      'INVALID_REQUEST',
+      `Il provider «${kind}» e gia configurato: modifica quello esistente.`
+    )
+  }
+}
+
+/**
+ * Costruisce la configurazione non segreta da conservare. Riparte dal record
+ * grezzo gia sul disco perche `update` rimpiazza la colonna per intero: senza
+ * questo, i campi scritti da un'altra versione verrebbero cancellati.
+ */
 function buildConfigurazione(
+  grezza: Record<string, unknown>,
   dati: ProviderConfigInput,
   stato: { haChiave: boolean; numeroHeader: number; attivo: boolean; privacy: ModalitaPrivacy }
-): Configurazione {
-  return {
+): Record<string, unknown> {
+  const nota: Configurazione = {
     nome: dati.nome ?? null,
     baseUrl: dati.baseUrl ?? null,
     generationModel: dati.generationModel ?? null,
@@ -337,16 +489,23 @@ function buildConfigurazione(
     numeroHeader: stato.numeroHeader,
     attivo: stato.attivo
   }
+  return { ...grezza, ...nota }
 }
 
-/** Rilegge la configurazione dal database in modo difensivo. */
-function parseConfigurazione(value: Record<string, unknown>): Configurazione {
-  return configurazioneSchema.parse(value ?? {})
+/**
+ * Rilegge la configurazione dal database in modo difensivo: una riga che non
+ * rispetta lo schema (valore fuori vocabolario scritto da un'altra versione,
+ * record corrotto) degrada sui default invece di far fallire l'intera lista e
+ * rendere la pagina impostazioni inutilizzabile.
+ */
+function leggiConfigurazione(value: Record<string, unknown>): Configurazione {
+  const esito = configurazioneSchema.safeParse(value ?? {})
+  return esito.success ? esito.data : configurazioneSchema.parse({})
 }
 
 /** Proietta una riga sulla vista non segreta esposta alla UI. */
 function toView(riga: ChiaveApi): ProviderView {
-  const config = parseConfigurazione(riga.configurazione)
+  const config = leggiConfigurazione(riga.configurazione)
   return {
     id: riga.id,
     kind: providerKindSchema.parse(riga.provider),
@@ -430,9 +589,17 @@ function interpretaErrore(errore: unknown): ProviderTestResult {
   return esito('non_raggiungibile', 'Provider non raggiungibile.')
 }
 
-/** Euristica leggera: l'errore parla di un modello inesistente. */
+/**
+ * Euristica: l'errore parla proprio di un modello inesistente. Deliberatamente
+ * stretta, su formule intere e non su parole isolate. Un `model` o un `404`
+ * sciolti compaiono anche in messaggi che non c'entrano nulla (un limite di
+ * rate «for model gpt-4o», la pagina 404 di un reverse proxy mal puntato):
+ * meglio un «non raggiungibile» generico che una diagnosi sbagliata.
+ */
 function sembraModelloMancante(messaggio: string): boolean {
-  return /model|modello|not found|404|does not exist|no such/i.test(messaggio)
+  return /model[\s_-]?not[\s_-]?found|unknown model|invalid model|no such model|the model .{0,80}does not exist|modello (non trovato|inesistente|non esiste)/i.test(
+    messaggio
+  )
 }
 
 function esito(stato: StatoConnessione, messaggio: string): ProviderTestResult {
@@ -494,8 +661,12 @@ function isSegretiProvider(value: unknown): value is SegretiProvider {
   if (!value || typeof value !== 'object') return false
   const record = value as Record<string, unknown>
   const apiKeyOk = record['apiKey'] === undefined || typeof record['apiKey'] === 'string'
-  const headersOk =
-    record['headers'] === undefined ||
-    (typeof record['headers'] === 'object' && record['headers'] !== null)
+  const headersOk = record['headers'] === undefined || isRecordDiStringhe(record['headers'])
   return apiKeyOk && headersOk
+}
+
+/** Un oggetto piatto con valori tutti stringa (la forma degli header). */
+function isRecordDiStringhe(value: unknown): value is Record<string, string> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false
+  return Object.values(value).every((valore) => typeof valore === 'string')
 }

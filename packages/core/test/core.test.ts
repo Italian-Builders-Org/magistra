@@ -32,6 +32,38 @@ test('invoke rifiuta una richiesta non valida con INVALID_REQUEST', async () => 
   )
 })
 
+test('il messaggio di una richiesta non valida e leggibile, non un dump JSON', async () => {
+  const core = createCore()
+  await assert.rejects(
+    () => core.invoke('echo', { message: 42 }),
+    (error: unknown) => {
+      assert.ok(error instanceof OperationError)
+      // Finisce sotto gli occhi dell'utente nel banner d'errore della UI.
+      assert.doesNotMatch(error.message, /[{[]/, 'niente JSON nel messaggio')
+      assert.match(error.message, /message: /)
+      return true
+    }
+  )
+})
+
+test('un percorso con caratteri di controllo non inietta a capo nel messaggio', async () => {
+  const core = createCore()
+  await assert.rejects(
+    () =>
+      core.invoke('providerSave', {
+        kind: 'openai-compatible',
+        baseUrl: 'https://gpu.studio.local/v1',
+        headers: { 'X-Buono\r\nX-Iniettato': 'v' }
+      }),
+    (error: unknown) => {
+      assert.ok(error instanceof OperationError)
+      assert.doesNotMatch(error.message, /[\r\n]/, 'il messaggio resta su una riga')
+      assert.match(error.message, /Nome di header HTTP non valido/)
+      return true
+    }
+  )
+})
+
 test('invoke rifiuta un payload assente con INVALID_REQUEST', async () => {
   const core = createCore()
   await assert.rejects(

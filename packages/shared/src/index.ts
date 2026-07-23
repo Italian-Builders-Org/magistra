@@ -118,7 +118,9 @@ export const uploadResponseSchema = z.object({
  * `openai-compatible` copre i gateway remoti e i runtime self-hosted (Ollama,
  * LM Studio, llama.cpp), dove la chiave e opzionale e la `base_url` obbligatoria.
  */
-export const providerKindSchema = z.enum(['anthropic', 'google', 'openai', 'openai-compatible'])
+export const providerKindSchema = z.enum(['anthropic', 'google', 'openai', 'openai-compatible'], {
+  errorMap: () => ({ message: 'Tipo di provider non riconosciuto' })
+})
 
 /** Tipo di provider. */
 export type ProviderKind = z.infer<typeof providerKindSchema>
@@ -127,10 +129,36 @@ export type ProviderKind = z.infer<typeof providerKindSchema>
  * Modalita privacy: quanto contesto e lecito inviare al provider. E
  * configurazione non segreta; il valore di default e `standard`.
  */
-export const modalitaPrivacySchema = z.enum(['standard', 'rigorosa'])
+export const modalitaPrivacySchema = z.enum(['standard', 'rigorosa'], {
+  errorMap: () => ({ message: 'Modalita privacy non riconosciuta' })
+})
 
 /** Modalita privacy configurata per un provider. */
 export type ModalitaPrivacy = z.infer<typeof modalitaPrivacySchema>
+
+// I messaggi di validazione sono in italiano perche finiscono sotto gli occhi
+// dell'utente: quelli predefiniti di Zod sono in inglese.
+
+const NOME_TROPPO_LUNGO = 'Il nome e troppo lungo (massimo 120 caratteri)'
+const MODELLO_TROPPO_LUNGO = "L'id del modello e troppo lungo (massimo 200 caratteri)"
+
+/**
+ * Nome di header HTTP valido (il «token» della RFC 9110). Vietare tutto il
+ * resto chiude la porta all'iniezione di header via CR/LF e intercetta subito
+ * un nome digitato male, invece di lasciarlo fallire nel fetch del provider.
+ */
+const nomeHeaderSchema = z
+  .string()
+  .trim()
+  .min(1, "Il nome dell'header non puo essere vuoto")
+  .max(200, "Il nome dell'header e troppo lungo (massimo 200 caratteri)")
+  .regex(/^[A-Za-z0-9!#$%&'*+.^_`|~-]+$/, 'Nome di header HTTP non valido')
+
+/** Valore di un header: qualsiasi testo, purche su una riga sola. */
+const valoreHeaderSchema = z
+  .string()
+  .max(4096, "Il valore dell'header e troppo lungo (massimo 4096 caratteri)")
+  .regex(/^[^\r\n]*$/, 'Il valore di un header non puo contenere un a capo')
 
 /** Esito del test di connessione a un provider, come mostrato in UI. */
 export const statoConnessioneSchema = z.enum(['ok', 'non_raggiungibile', 'modello_mancante'])
@@ -151,16 +179,36 @@ export const providerConfigInputSchema = z.object({
   id: z.string().min(1).optional(),
   kind: providerKindSchema,
   /** Etichetta leggibile, utile per un endpoint OpenAI-compatibile. */
-  nome: z.string().trim().min(1).max(120).optional(),
+  nome: z
+    .string()
+    .trim()
+    .min(1, 'Il nome non puo essere vuoto')
+    .max(120, NOME_TROPPO_LUNGO)
+    .optional(),
   /** Indirizzo dell'endpoint, ad esempio `http://localhost:11434/v1`. */
-  baseUrl: z.string().trim().url().optional(),
-  generationModel: z.string().trim().min(1).max(200).optional(),
-  embeddingModel: z.string().trim().min(1).max(200).optional(),
+  baseUrl: z.string().trim().url('Indirizzo non valido: usa una URL completa').optional(),
+  generationModel: z
+    .string()
+    .trim()
+    .min(1, "L'id del modello non puo essere vuoto")
+    .max(200, MODELLO_TROPPO_LUNGO)
+    .optional(),
+  embeddingModel: z
+    .string()
+    .trim()
+    .min(1, "L'id del modello non puo essere vuoto")
+    .max(200, MODELLO_TROPPO_LUNGO)
+    .optional(),
   /** Timeout della richiesta al provider, in millisecondi. */
-  timeoutMs: z.number().int().positive().max(600_000).optional(),
+  timeoutMs: z
+    .number({ invalid_type_error: 'Il timeout deve essere un numero di millisecondi' })
+    .int('Il timeout deve essere un numero intero di millisecondi')
+    .positive('Il timeout deve essere maggiore di zero')
+    .max(600_000, 'Il timeout non puo superare i 10 minuti')
+    .optional(),
   privacy: modalitaPrivacySchema.optional(),
   /** Segreto in chiaro. Non attraversa mai il confine in uscita. */
-  apiKey: z.string().max(4096).optional(),
+  apiKey: z.string().max(4096, 'La chiave e troppo lunga').optional(),
   /**
    * Header di autenticazione per un endpoint OpenAI-compatibile sulla rete dello
    * studio (nome -> valore). Sono segreti: cifrati a riposo come la chiave e
@@ -168,7 +216,7 @@ export const providerConfigInputSchema = z.object({
    * Presenti solo quando si (ri)definiscono: assenti in aggiornamento li lascia
    * invariati, l'oggetto vuoto li rimuove.
    */
-  headers: z.record(z.string().trim().min(1).max(200), z.string().max(4096)).optional()
+  headers: z.record(nomeHeaderSchema, valoreHeaderSchema).optional()
 })
 
 /** Dati per creare o aggiornare un provider. */
@@ -296,6 +344,42 @@ export const operationErrorCodeSchema = z.enum([
 /** Codice di errore di un'operazione. */
 export type OperationErrorCode = z.infer<typeof operationErrorCodeSchema>
 
+/** Quante violazioni si riportano prima di troncare, per non allagare la UI. */
+const MAX_VIOLAZIONI_DESCRITTE = 3
+
+/**
+ * Rende leggibile un errore di validazione Zod. `ZodError.message` e il JSON
+ * completo delle violazioni: finisce tale e quale nel messaggio d'errore che
+ * attraversa l'IPC e che la UI mostra all'utente, che si ritrova un dump al
+ * posto di una spiegazione. Qui si riduce a `campo: motivo`, separati da «; ».
+ *
+ * I segmenti del percorso vengono ripuliti dai caratteri di controllo: possono
+ * venire dall'input (la chiave di un `record`, cioe il nome di un header) e non
+ * devono poter iniettare a capo nel messaggio.
+ */
+export function descriviErroriValidazione(error: z.ZodError): string {
+  const violazioni = error.issues.slice(0, MAX_VIOLAZIONI_DESCRITTE).map((issue) => {
+    const percorso = issue.path.map((segmento) => ripuliscePerMessaggio(segmento)).join('.')
+    return percorso ? `${percorso}: ${issue.message}` : issue.message
+  })
+
+  const oltre = error.issues.length - violazioni.length
+  if (oltre > 0) {
+    violazioni.push(`e altri ${oltre} problemi`)
+  }
+  return violazioni.join('; ')
+}
+
+// I caratteri di controllo sono proprio cio che va tolto: la regola che ne
+// vieta l'uso nei regex qui non si applica.
+// eslint-disable-next-line no-control-regex
+const CARATTERI_DI_CONTROLLO = /[\u0000-\u001f\u007f]+/g
+
+/** Riduce un segmento di percorso a testo su una riga sola, senza controlli. */
+function ripuliscePerMessaggio(segmento: PropertyKey): string {
+  return String(segmento).replace(CARATTERI_DI_CONTROLLO, ' ').trim().slice(0, 80)
+}
+
 /**
  * Errore di dominio di un'operazione, con un codice stabile.
  * E serializzabile attraverso l'IPC tramite `toEnvelopeError`.
@@ -303,8 +387,8 @@ export type OperationErrorCode = z.infer<typeof operationErrorCodeSchema>
 export class OperationError extends Error {
   readonly code: OperationErrorCode
 
-  constructor(code: OperationErrorCode, message: string) {
-    super(message)
+  constructor(code: OperationErrorCode, message: string, options?: ErrorOptions) {
+    super(message, options)
     this.name = 'OperationError'
     this.code = code
   }

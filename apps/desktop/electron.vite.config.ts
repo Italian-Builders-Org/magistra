@@ -10,6 +10,13 @@ import tailwindcss from '@tailwindcss/vite'
 // I pacchetti di workspace (@magistra/*) sono distribuiti come sorgenti
 // TypeScript, non come JS compilato: vanno bundlati da Vite in main e preload,
 // non esternalizzati (Node non saprebbe importare i loro .ts a runtime).
+//
+// Conseguenza da tenere a mente: `externalizeDepsPlugin` esternalizza in base
+// alle `dependencies` di questo package.json. Le dipendenze pesanti dei
+// pacchetti bundlati (PGlite per @magistra/data, il Vercel AI SDK per
+// @magistra/provider) vanno quindi dichiarate ANCHE qui, altrimenti finirebbero
+// dentro il bundle di main. I range vanno tenuti allineati con quelli dei
+// rispettivi pacchetti: sono la stessa dipendenza, dichiarata due volte.
 const workspacePackages = [
   '@magistra/shared',
   '@magistra/core',

@@ -32,11 +32,11 @@ jobs:
       - name: Valida knowledge base
         run: npm test
 
+      # Copre anche la suite di sicurezza del desktop: il suo script `test`
+      # gira su tutto `test/**`. `npm run test:security` resta per lanciarla
+      # da sola in locale.
       - name: Test unità
         run: npm run test:unit
-
-      - name: Test sicurezza
-        run: npm run test:security
 
       - name: Lint
         run: npm run lint

@@ -25,6 +25,22 @@ const cipherFinto: SecretCipher = {
   }
 }
 
+/** Conteggio di token minimo ma completo, come lo restituisce il Vercel AI SDK. */
+const USO_FINTO = {
+  inputTokens: 1,
+  inputTokenDetails: {
+    noCacheTokens: 1,
+    cacheReadTokens: 0,
+    cacheWriteTokens: 0
+  },
+  outputTokens: 1,
+  outputTokenDetails: {
+    textTokens: 1,
+    reasoningTokens: 0
+  },
+  totalTokens: 2
+}
+
 /** Engine che risponde con successo a generazione ed embedding. */
 function engineOk(): LlmEngine {
   const handle: LlmStreamHandle = {
@@ -34,7 +50,7 @@ function engineOk(): LlmEngine {
     text: Promise.resolve('pong'),
     toolCalls: Promise.resolve([]),
     finishReason: Promise.resolve('stop'),
-    usage: Promise.resolve({ inputTokens: 1, outputTokens: 1, totalTokens: 2 })
+    usage: Promise.resolve(USO_FINTO)
   }
   return {
     streamText: () => handle,
@@ -73,6 +89,33 @@ function engineRete(errore: Error): LlmEngine {
   }
 }
 
+/** Cifra correttamente ma non sa piu decifrare: keyring ruotato o corrotto. */
+const cipherIlleggibile: SecretCipher = {
+  encrypt: cipherFinto.encrypt,
+  async decrypt() {
+    throw new Error('KEY_ID_NOT_FOUND')
+  }
+}
+
+/** Engine che non risponde mai: serve a provare la scadenza del test. */
+function engineAppeso(): LlmEngine {
+  const mai = new Promise<never>(() => {})
+  return {
+    streamText: () => ({
+      textStream: (async function* () {
+        yield* []
+        await mai
+      })(),
+      text: mai,
+      toolCalls: mai,
+      finishReason: mai,
+      usage: mai
+    }),
+    embed: () => mai,
+    embedMany: () => mai
+  }
+}
+
 async function nuovoServizio(engine?: LlmEngine): Promise<{
   store: DataStore
   service: ReturnType<typeof createProviderSettingsService>
@@ -84,6 +127,11 @@ async function nuovoServizio(engine?: LlmEngine): Promise<{
     engine
   })
   return { store, service }
+}
+
+/** Codice di un `OperationError` che ha attraversato un confine. */
+function codice(e: unknown): string | undefined {
+  return e instanceof Error ? (e as { code?: string }).code : undefined
 }
 
 test('crea un provider remoto, cifra la chiave e attiva il primo', async () => {
@@ -377,7 +425,257 @@ test('testConnection su id inesistente => NOT_FOUND', async () => {
   try {
     await assert.rejects(
       () => service.testConnection('inesistente'),
-      (e: unknown) => e instanceof Error && (e as { code?: string }).code === 'NOT_FOUND'
+      (e: unknown) => codice(e) === 'NOT_FOUND'
+    )
+  } finally {
+    await store.close()
+  }
+})
+
+// === Segreti illeggibili =====================================================
+
+test('se la decifratura fallisce, la modifica si interrompe senza toccare i segreti', async () => {
+  const store = await openDataStore()
+  try {
+    // Si crea con una cifratura sana, poi il vault diventa illeggibile: e
+    // esattamente cio che accade se il keyring viene ruotato o si corrompe.
+    const sano = createProviderSettingsService({ chiaviApi: store.chiaviApi, cipher: cipherFinto })
+    const creato = await sano.save({
+      kind: 'openai-compatible',
+      baseUrl: 'https://gpu.studio.local/v1',
+      generationModel: 'qwen2.5',
+      apiKey: 'sk-chiave-utente',
+      headers: { Authorization: 'Bearer t1' }
+    })
+    const rigaPrima = await store.chiaviApi.get(creato.id)
+
+    const rotto = createProviderSettingsService({
+      chiaviApi: store.chiaviApi,
+      cipher: cipherIlleggibile
+    })
+    // L'utente cambia i soli header: la chiave non deve essere distrutta.
+    await assert.rejects(
+      () =>
+        rotto.save({
+          id: creato.id,
+          kind: 'openai-compatible',
+          baseUrl: 'https://gpu.studio.local/v1',
+          generationModel: 'qwen2.5',
+          headers: { Authorization: 'Bearer t2' }
+        }),
+      (e: unknown) => codice(e) === 'INTERNAL'
+    )
+
+    const rigaDopo = await store.chiaviApi.get(creato.id)
+    assert.equal(rigaDopo!.valore_cifrato, rigaPrima!.valore_cifrato, 'il blob non viene riscritto')
+    assert.equal(rigaDopo!.configurazione.haChiave, true, 'la chiave risulta ancora presente')
+  } finally {
+    await store.close()
+  }
+})
+
+test('segreti illeggibili: il test di connessione lo riporta, senza esplodere', async () => {
+  const store = await openDataStore()
+  try {
+    const sano = createProviderSettingsService({ chiaviApi: store.chiaviApi, cipher: cipherFinto })
+    const creato = await sano.save({
+      kind: 'anthropic',
+      generationModel: 'claude-sonnet-5',
+      apiKey: 'sk-a'
+    })
+
+    const rotto = createProviderSettingsService({
+      chiaviApi: store.chiaviApi,
+      cipher: cipherIlleggibile,
+      engine: engineOk()
+    })
+    const esito = await rotto.testConnection(creato.id)
+    assert.equal(esito.stato, 'non_raggiungibile')
+    assert.match(esito.messaggio, /decifrare/i)
+  } finally {
+    await store.close()
+  }
+})
+
+// === Scadenza del test =======================================================
+
+test('il timeout vale anche sul percorso di embedding, che non onora l abort', async () => {
+  const { store, service } = await nuovoServizio(engineAppeso())
+  try {
+    // Solo modello di embedding: il provider non ha capacita generativa, quindi
+    // il test passa da `embed`, che un AbortSignal non lo accetta.
+    const view = await service.save({
+      kind: 'openai',
+      embeddingModel: 'text-embedding-3-small',
+      apiKey: 'sk-a',
+      timeoutMs: 50
+    })
+    const esito = await service.testConnection(view.id)
+    assert.equal(esito.stato, 'non_raggiungibile')
+    assert.match(esito.messaggio, /timeout/i)
+  } finally {
+    await store.close()
+  }
+})
+
+// === Robustezza della configurazione ========================================
+
+test('i campi sconosciuti nella configurazione sopravvivono al salvataggio', async () => {
+  const { store, service } = await nuovoServizio()
+  try {
+    const creato = await service.save({
+      kind: 'anthropic',
+      generationModel: 'claude-sonnet-5',
+      apiKey: 'sk-a'
+    })
+    // Simula una riga scritta da un'altra versione, con un campo in piu.
+    const riga = await store.chiaviApi.get(creato.id)
+    await store.chiaviApi.update(creato.id, {
+      configurazione: { ...riga!.configurazione, campoFuturo: 'da conservare' }
+    })
+
+    await service.save({ id: creato.id, kind: 'anthropic', generationModel: 'claude-opus-4-8' })
+
+    const dopo = await store.chiaviApi.get(creato.id)
+    assert.equal(dopo!.configurazione.campoFuturo, 'da conservare')
+    assert.equal(dopo!.configurazione.generationModel, 'claude-opus-4-8')
+  } finally {
+    await store.close()
+  }
+})
+
+test('una riga con configurazione fuori vocabolario non fa cadere la lista', async () => {
+  const { store, service } = await nuovoServizio()
+  try {
+    const creato = await service.save({
+      kind: 'anthropic',
+      generationModel: 'claude-sonnet-5',
+      apiKey: 'sk-a'
+    })
+    // `privacy` con un valore che questa versione non conosce.
+    await store.chiaviApi.update(creato.id, { configurazione: { privacy: 'paranoica' } })
+
+    const lista = await service.list()
+    assert.equal(lista.length, 1)
+    assert.equal(lista[0]!.privacy, 'standard', 'ripiega sul default invece di lanciare')
+  } finally {
+    await store.close()
+  }
+})
+
+// === Vincoli e ciclo di vita ================================================
+
+test('eliminando il provider attivo, ne subentra un altro', async () => {
+  const { store, service } = await nuovoServizio()
+  try {
+    const primo = await service.save({
+      kind: 'anthropic',
+      generationModel: 'claude-sonnet-5',
+      apiKey: 'sk-a'
+    })
+    const secondo = await service.save({
+      kind: 'openai',
+      generationModel: 'gpt-4o',
+      apiKey: 'sk-b'
+    })
+    assert.equal(primo.attivo, true)
+
+    await service.remove(primo.id)
+
+    const lista = await service.list()
+    assert.equal(lista.length, 1)
+    assert.equal(lista[0]!.id, secondo.id)
+    assert.equal(lista[0]!.attivo, true, 'l app non resta senza provider attivo')
+  } finally {
+    await store.close()
+  }
+})
+
+test('eliminare un provider inesistente => NOT_FOUND', async () => {
+  const { store, service } = await nuovoServizio()
+  try {
+    await assert.rejects(
+      () => service.remove('inesistente'),
+      (e: unknown) => codice(e) === 'NOT_FOUND'
+    )
+  } finally {
+    await store.close()
+  }
+})
+
+test('il tipo di provider non si puo cambiare in modifica', async () => {
+  const { store, service } = await nuovoServizio()
+  try {
+    const creato = await service.save({
+      kind: 'anthropic',
+      generationModel: 'claude-sonnet-5',
+      apiKey: 'sk-a'
+    })
+    await assert.rejects(
+      () =>
+        service.save({ id: creato.id, kind: 'openai', generationModel: 'gpt-4o', apiKey: 'sk-a' }),
+      (e: unknown) => codice(e) === 'INVALID_REQUEST'
+    )
+  } finally {
+    await store.close()
+  }
+})
+
+test('un provider remoto si configura una volta sola, gli endpoint locali no', async () => {
+  const { store, service } = await nuovoServizio()
+  try {
+    await service.save({ kind: 'anthropic', generationModel: 'claude-sonnet-5', apiKey: 'sk-a' })
+    await assert.rejects(
+      () => service.save({ kind: 'anthropic', generationModel: 'claude-opus-4-8', apiKey: 'sk-b' }),
+      (e: unknown) => codice(e) === 'INVALID_REQUEST'
+    )
+
+    // Due macchine OpenAI-compatibili sono invece legittime.
+    await service.save({
+      kind: 'openai-compatible',
+      baseUrl: 'http://localhost:11434/v1',
+      generationModel: 'qwen2.5'
+    })
+    await service.save({
+      kind: 'openai-compatible',
+      baseUrl: 'https://gpu.studio.local/v1',
+      generationModel: 'llama3.1'
+    })
+    assert.equal((await service.list()).length, 3)
+  } finally {
+    await store.close()
+  }
+})
+
+test('un limite di rate che nomina il modello non diventa «modello mancante»', async () => {
+  const { store, service } = await nuovoServizio(
+    engineRete(new Error('429 Rate limit reached for model gpt-4o in organization org-x'))
+  )
+  try {
+    const view = await service.save({
+      kind: 'openai',
+      generationModel: 'gpt-4o',
+      apiKey: 'sk-a'
+    })
+    const esito = await service.testConnection(view.id)
+    assert.equal(esito.stato, 'non_raggiungibile')
+  } finally {
+    await store.close()
+  }
+})
+
+test('un nome di header con CRLF viene rifiutato', async () => {
+  const { store, service } = await nuovoServizio()
+  try {
+    await assert.rejects(
+      () =>
+        service.save({
+          kind: 'openai-compatible',
+          baseUrl: 'https://gpu.studio.local/v1',
+          generationModel: 'qwen2.5',
+          headers: { 'X-Buono\r\nX-Iniettato': 'valore' }
+        }),
+      (e: unknown) => codice(e) === 'INVALID_REQUEST'
     )
   } finally {
     await store.close()
